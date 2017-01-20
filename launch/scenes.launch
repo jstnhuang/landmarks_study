@@ -1,0 +1,10 @@
+<launch>
+  <param name="mongodb_use_daemon" value="true" />
+  <param name="mongodb_host" value="localhost" />
+  <param name="mongodb_port" value="27017" />
+  <node name="message_store" pkg="mongodb_store" type="message_store_node.py" /> 
+  <node pkg="landmarks_study" type="landmarks_study_scenes_main" name="landmarks_study_scenes_main" required="true">
+    <remap from="cloud_in" to="head_mount_kinect/depth_registered/points" />
+  </node>
+  <node pkg="rviz" type="rviz" name="scene_rviz" args="-d $(find landmarks_study)/rviz/save_scenes.rviz" />
+</launch>
