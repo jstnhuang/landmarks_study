@@ -1,0 +1,7 @@
+{
+  "name": "study",
+  "short_name": "study",
+  "description": "CustomLandmarks study frontend",
+  "start_url": "/",
+  "display": "standalone"
+}
