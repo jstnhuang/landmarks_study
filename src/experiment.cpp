@@ -225,7 +225,8 @@ void Experiment::Test(const std::string& participant_id,
   vox.setInputCloud(test_scene_pcl);
   vox.filter(*test_scene_sampled);
 
-  pose_estimator_.set_object(landmark_cloud_sampled, landmark_.roi);
+  pose_estimator_.set_object(landmark_cloud_sampled);
+  pose_estimator_.set_roi(landmark_.roi);
   pose_estimator_.set_scene(test_scene_sampled);
   UpdateParams();
   std::vector<rapid::perception::PoseEstimationMatch> matches;
