@@ -1,24 +1,36 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/app-route/app-location.html">
 <link rel="import" href="../../bower_components/app-route/app-route.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../bower_components/ros-topic/ros-topic.html">
 
 <dom-module id="study-start">
   <template>
+    <style include="iron-flex iron-flex-alignment"></style>
     <style>
       :host {
         display: block;
-        max-width: 500px;
+        height: 100%;
+        max-width: 400px;
         margin: 0px auto;
         padding-top: 20px;
+      }
+      paper-button {
+        background-color: var(--paper-green-600);
+        color: #fff;
+        height: 35px;
+        @apply(--paper-font-button);
       }
       paper-input {
         display: inline-block;
       }
       h1 {
         margin-top: 0;
+      }
+      div.main {
+        height: 100%;
       }
     </style>
     <app-location route="{{route}}"></app-location>
@@ -34,15 +46,22 @@
       msg-type="landmarks_study/UserAction"
     ></ros-topic>
 
-    <h1>CustomLandmarks study</h1>
-    <paper-input id="participantInput"
-      always-float-label
-      auto-validate
-      error-message="Participant ID required."
-      label="Participant ID"
-      required
-    ></paper-input>
-    <paper-button on-tap="handleStart">Start</paper-button>
+    <div class="layout vertical main">
+      <div class="flex"></div>
+      <h1>CustomLandmarks study</h1>
+      <!--div class="layout horizontal end"-->
+      <div class="">
+        <paper-input id="participantInput"
+          always-float-label
+          auto-validate
+          error-message="Participant ID required."
+          label="Participant ID"
+          required
+        ></paper-input>
+        <paper-button on-tap="handleStart">Start</paper-button>
+      </div>
+      <div class="flex"></div>
+    </div>
   </template>
 
   <script>
