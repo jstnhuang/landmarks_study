@@ -14,7 +14,7 @@
     <style>
       :host {
         display: block;
-        background-color: var(--paper-grey-100);   
+        background-color: var(--paper-grey-200);
         @apply(--paper-font-common-base);
         height: 100%;
       }
@@ -61,6 +61,12 @@
       is: 'study-app',
 
       properties: {
+      },
+
+      attached: function() {
+        if (!this.routeData.view) {
+          this.set('routeData.view', 'start');
+        }
       },
 
       handleConnection: function() {
