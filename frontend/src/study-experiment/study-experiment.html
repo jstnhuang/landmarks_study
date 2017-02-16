@@ -207,6 +207,8 @@
           },
         };
         this.$.topic.publish(msg);
+        this.isEditing = true;
+        this.set('routeData.taskNum', taskNum + 1);
       },
     });
   </script>
