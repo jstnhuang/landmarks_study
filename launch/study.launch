@@ -1,7 +1,11 @@
 <launch>
+  <!-- Whether to run the experiment server in GDB -->
   <arg name="debug" default="false" />
+
+  <!-- List of tasks to include in the experiment -->
   <rosparam param="experiment_tasks">['cans']</rosparam>
 
+  <!-- CustomLandmarks parameters -->
   <param name="leaf_size" value="0.0075" />
   <param name="min_x" value="0.3" />
   <param name="min_y" value="-0.75" />
@@ -10,7 +14,6 @@
   <param name="max_y" value="0.75" />
   <param name="max_z" value="1.7" />
   <param name="sample_ratio" value="0.04" />
-  <!--param name="fitness_threshold" value="0.0065" /-->
   <param name="fitness_threshold" value="0.0065" />
   <param name="sigma_threshold" value="8" />
   <param name="nms_radius" value="0.02" />
@@ -18,16 +21,29 @@
   <param name="num_candidates" value="1000" />
   <param name="num_threads" value="8" />
 
+  <!-- mongodb_store -->
   <param name="mongodb_use_daemon" value="true" />
   <param name="mongodb_host" value="localhost" />
   <param name="mongodb_port" value="27017" />
   <node name="message_store" pkg="mongodb_store" type="message_store_node.py" /> 
+
+  <!-- The experiment server -->
   <node if="$(arg debug)" pkg="landmarks_study" type="landmarks_study_node" name="landmarks_study_node" required="true" launch-prefix="xterm -e gdb -ex run --args">
     <remap from="cloud_in" to="head_mount_kinect/depth_registered/points" />
   </node>
   <node unless="$(arg debug)" pkg="landmarks_study" type="landmarks_study_node" name="landmarks_study_node" required="true">
     <remap from="cloud_in" to="head_mount_kinect/depth_registered/points" />
   </node>
+
+  <!-- ROS web support -->
   <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />
+  <node pkg="interactive_marker_proxy" type="proxy" name="interactive_marker_proxy">
+    <!--param name="target_frame" value="/base_link" /-->
+    <remap from="target_frame" to="/base_link" />
+    <remap from="topic_ns" to="/roi" />
+  </node>
+  <node pkg="tf2_web_republisher" type="tf2_web_republisher" name="tf2_web_republisher" />
+
+  <!-- rviz -->
   <node pkg="rviz" type="rviz" name="scene_rviz" args="-d $(find landmarks_study)/rviz/study.rviz" />
 </launch>
