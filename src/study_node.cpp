@@ -1,5 +1,8 @@
 #include "ros/ros.h"
 
+#include <string>
+#include <vector>
+
 #include "mongodb_store/message_store.h"
 #include "rapid_msgs/GetStaticCloud.h"
 #include "rapid_msgs/ListStaticClouds.h"
@@ -41,9 +44,13 @@ int main(int argc, char** argv) {
   pose_estimator.set_alignment_publisher(alignment_pub);
   pose_estimator.set_output_publisher(output_pub);
 
+  // Build experiment
+  std::vector<std::string> task_list;
+  nh.getParam("experiment_tasks", task_list);
+
   study::Experiment experiment(participant_db, landmarks_db, scenes_db, roi,
                                scene_pub, alignment_pub, output_pub,
-                               pose_estimator);
+                               pose_estimator, task_list);
   ros::Subscriber action_sub = nh.subscribe(
       "user_actions", 10, &study::Experiment::ProcessAction, &experiment);
   ros::spin();

@@ -2,17 +2,14 @@
 
 #include <algorithm>
 #include <cstdlib>
-#include <functional>
-#include <sstream>
 #include <string>
 #include <vector>
 
-#include "landmarks_study/experiment_constants.h"
-
 namespace study {
-std::vector<int> TaskOrder(const std::string& participant_id) {
-  std::vector<int> order(kNumTasks);
-  for (int i = 0; i < kNumTasks; ++i) {
+std::vector<int> TaskOrder(const std::string& participant_id,
+                           const int num_tasks) {
+  std::vector<int> order(num_tasks);
+  for (int i = 0; i < num_tasks; ++i) {
     order[i] = i;
   }
   int hash = 0;
@@ -25,13 +22,10 @@ std::vector<int> TaskOrder(const std::string& participant_id) {
   return order;
 }
 
-std::string TaskId(const std::string& participant_id, const int task_number) {
-  std::vector<int> task_order = TaskOrder(participant_id);
+std::string TaskId(const std::string& participant_id, const int task_number,
+                   const std::vector<std::string>& task_list) {
+  std::vector<int> task_order = TaskOrder(participant_id, task_list.size());
   int task_id = task_order[task_number];
-  if (task_id == 0) {
-    return "cans";
-  } else {
-    return "";
-  }
+  return task_list[task_id];
 }
 }  // namespace study

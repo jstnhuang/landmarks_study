@@ -2,6 +2,7 @@
 #define _STUDY_EXPERIMENT_H_
 
 #include <string>
+#include <vector>
 
 #include "mongodb_store/message_store.h"
 #include "rapid_perception/box3d_roi_server.h"
@@ -22,7 +23,8 @@ class Experiment {
              const ros::Publisher& scene_pub,
              const ros::Publisher& alignment_pub,
              const ros::Publisher& output_pub,
-             const rapid::perception::PoseEstimator& pose_estimator);
+             const rapid::perception::PoseEstimator& pose_estimator,
+             const std::vector<std::string>& task_list);
   void ProcessAction(const landmarks_study::UserAction& action);
 
  private:
@@ -61,6 +63,7 @@ class Experiment {
   ros::Publisher alignment_pub_;
   ros::Publisher output_pub_;
   rapid::perception::PoseEstimator pose_estimator_;
+  std::vector<std::string> task_list_;
 
   // The experiment server assumes we are managing the state of the most
   // recently loaded participant/task.

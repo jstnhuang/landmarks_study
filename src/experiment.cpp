@@ -38,7 +38,8 @@ Experiment::Experiment(const MessageStoreProxy& participant_db,
                        const ros::Publisher& scene_pub,
                        const ros::Publisher& alignment_pub,
                        const ros::Publisher& output_pub,
-                       const rapid::perception::PoseEstimator& pose_estimator)
+                       const rapid::perception::PoseEstimator& pose_estimator,
+                       const std::vector<std::string>& task_list)
     : participant_db_(participant_db),
       landmark_db_(landmark_db),
       scene_db_(scene_db),
@@ -47,6 +48,7 @@ Experiment::Experiment(const MessageStoreProxy& participant_db,
       alignment_pub_(alignment_pub),
       output_pub_(output_pub),
       pose_estimator_(pose_estimator),
+      task_list_(task_list),
       participant_(),
       task_(),
       scene_(new sensor_msgs::PointCloud2),
@@ -57,7 +59,7 @@ Experiment::Experiment(const MessageStoreProxy& participant_db,
 
 void Experiment::ProcessAction(const landmarks_study::UserAction& action) {
   const std::string& task_id =
-      TaskId(action.participant_id, action.task_number);
+      TaskId(action.participant_id, action.task_number, task_list_);
   if (action.action == landmarks_study::UserAction::LOAD) {
     // Save current ROI
     if (task_.id != "") {

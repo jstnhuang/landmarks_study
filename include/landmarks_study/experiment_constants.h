@@ -2,7 +2,6 @@
 #define _EXPERIMENT_CONSTANTS_H_
 
 namespace study {
-static const int kNumTasks = 1;
 static const char kBaseFrame[] = "base_link";
 }  // namespace study
 
