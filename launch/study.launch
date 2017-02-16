@@ -3,7 +3,7 @@
   <arg name="debug" default="false" />
 
   <!-- List of tasks to include in the experiment -->
-  <rosparam param="experiment_tasks">['cans']</rosparam>
+  <rosparam param="experiment_tasks">['cans', 'marker_holder', 'drawer']</rosparam>
 
   <!-- CustomLandmarks parameters -->
   <param name="leaf_size" value="0.0075" />
