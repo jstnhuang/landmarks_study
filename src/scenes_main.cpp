@@ -20,8 +20,6 @@ int main(int argc, char** argv) {
   ros::NodeHandle nh;
   tf::TransformListener tf_listener;
   mongodb_store::MessageStoreProxy db(nh, "scenes", "landmarks_study");
-  mongodb_store::MessageStoreProxy name_db(nh, "scene_names",
-                                           "landmarks_study");
   ros::Publisher scene_pub =
       nh.advertise<sensor_msgs::PointCloud2>("scene", 1, true);
   while (ros::ok()) {
@@ -46,12 +44,12 @@ int main(int argc, char** argv) {
     }
 
     if (command == "list") {
-      std::vector<std_msgs::String::Ptr> results;
-      name_db.query(results);
-      std::cout << std::endl;
-      for (size_t i = 0; i < results.size(); ++i) {
-        std::cout << results[i]->data << std::endl;
-      }
+      std::cout << "Not implemented." << std::endl;
+      // std::vector<std_msgs::String::Ptr> results;
+      // std::cout << std::endl;
+      // for (size_t i = 0; i < results.size(); ++i) {
+      //  std::cout << results[i]->data << std::endl;
+      //}
     } else if (command == "load") {
       std::vector<sensor_msgs::PointCloud2::Ptr> results;
       bool success = db.queryNamed(name, results);
@@ -75,7 +73,7 @@ int main(int argc, char** argv) {
       pcl::CropBox<pcl::PointXYZRGB> crop;
       crop.setInputCloud(pcl_cloud);
       Eigen::Vector4f min_pt;
-      min_pt << 0, -0.75, 0.3, 1;
+      min_pt << 0, -0.75, 0.2, 1;
       Eigen::Vector4f max_pt;
       max_pt << 1.2, 0.75, 1.7, 1;
       crop.setMin(min_pt);
@@ -89,10 +87,6 @@ int main(int argc, char** argv) {
       pcl::toROSMsg(*pcl_cloud_cropped, final_cloud);
       scene_pub.publish(final_cloud);
       db.updateNamed(name, final_cloud, true);
-      std_msgs::String name_msg;
-      name_msg.data = name;
-      name_db.update(name_msg, mongo::BSONObj(), mongo::BSONObj(),
-                     mongo::BSONObj(), true);
     } else if (input == "exit") {
       return 0;
     } else {
