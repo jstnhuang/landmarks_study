@@ -1,0 +1,32 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/app-route/app-location.html">
+<link rel="import" href="../../bower_components/app-route/app-route.html">
+
+<dom-module id="study-experiment">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    <app-location route="{{route}}"></app-location>
+    <app-route
+      route="{{route}}"
+      pattern="/:view"
+      data="{{routeData}}"
+      tail="{{subroute}}"
+    ></app-route>
+
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'study-experiment',
+
+      properties: {
+      },
+
+    });
+  </script>
+</dom-module>

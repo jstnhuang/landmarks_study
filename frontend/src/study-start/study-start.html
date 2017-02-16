@@ -1,0 +1,47 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/app-route/app-location.html">
+<link rel="import" href="../../bower_components/app-route/app-route.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/ros-topic/ros-topic.html">
+
+<dom-module id="study-start">
+  <template>
+    <style>
+      :host {
+        display: block;
+        max-width: 500px;
+        margin: 0px auto;
+        padding-top: 20px;
+      }
+      paper-input {
+        display: inline-block;
+      }
+      h1 {
+        margin-top: 0;
+      }
+    </style>
+    <app-location route="{{route}}"></app-location>
+    <app-route
+      route="{{route}}"
+      pattern="/:view"
+      data="{{routeData}}"
+    ></app-route>
+    <h1>CustomLandmarks study</h1>
+    <paper-input always-float-label label="Participant ID"></paper-input>
+    <paper-button>Start</paper-button>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'study-start',
+
+      properties: {
+        route: Object,
+      },
+
+    });
+  </script>
+</dom-module>

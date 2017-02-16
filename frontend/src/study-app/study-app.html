@@ -1,13 +1,53 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/app-route/app-location.html">
+<link rel="import" href="../../bower_components/app-route/app-route.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-styles/color.html">
+<link rel="import" href="../../bower_components/paper-styles/typography.html">
+<link rel="import" href="../../bower_components/ros-websocket/ros-websocket.html">
+<link rel="import" href="../study-experiment/study-experiment.html">
+<link rel="import" href="../study-start/study-start.html">
 
 <dom-module id="study-app">
   <template>
     <style>
       :host {
         display: block;
+        background-color: var(--paper-grey-100);   
+        @apply(--paper-font-common-base);
+        height: 100%;
       }
     </style>
-    <h2>Hello [[prop1]]</h2>
+    <app-location route="{{route}}"></app-location>
+    <app-route
+      route="{{route}}"
+      pattern="/:view"
+      data="{{routeData}}"
+      tail="{{subroute}}"
+    ></app-route>
+    <ros-websocket auto
+      id="websocket"
+      ros="{{ros}}"
+      on-connection="handleConnection"
+      on-close="handleClose"
+      on-error="handleError"
+    ></ros-websocket>
+
+    <iron-pages selected="[[routeData.view]]" attr-for-selected="name">
+      <study-start name="start" route="{{route}}"></study-start>
+      <study-experiment name="experiment"></study-experiment>
+    </iron-pages>
+
+    <paper-dialog id="disconnectDialog" modal>
+      <h2>Disconnected from experiment server</h2>
+      <p>
+        The connection to the experiment server was lost.
+        Please ask the experimenter for help.
+      </p>
+      <div class="buttons">
+        <paper-button dialog-confirm on-tap="handleReconnect">Retry</paper-button>
+      </div>
+    </paper-dialog>
   </template>
 
   <script>
@@ -16,12 +56,25 @@
       is: 'study-app',
 
       properties: {
-        prop1: {
-          type: String,
-          value: 'study-app',
-        },
       },
 
+      handleConnection: function() {
+        console.log('Connected to websocket server.');
+      },
+
+      handleClose: function() {
+        console.log('Connection to websocket server closed.');
+        this.$.disconnectDialog.open();
+      },
+
+      handleError: function(evt) {
+        console.log('Error connecting to websocket server: ', evt.detail);
+        this.$.disconnectDialog.open();
+      },
+
+      handleReconnect: function() {
+        this.$.websocket.connect();
+      },
     });
   </script>
 </dom-module>
