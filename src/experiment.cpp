@@ -272,7 +272,7 @@ bool Experiment::GetScene(const std::string& scene_id,
     return false;
   }
   if (!(results[0])) {
-    ROS_ERROR("Results is null");
+    ROS_ERROR("Could not load scene %s", scene_id.c_str());
     return false;
   }
   *cloud = *results[0];
