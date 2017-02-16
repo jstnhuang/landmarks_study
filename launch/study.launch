@@ -10,7 +10,7 @@
   <param name="max_z" value="1.7" />
   <param name="sample_ratio" value="0.04" />
   <!--param name="fitness_threshold" value="0.0065" /-->
-  <param name="fitness_threshold" value="0.0055" />
+  <param name="fitness_threshold" value="0.0065" />
   <param name="sigma_threshold" value="8" />
   <param name="nms_radius" value="0.02" />
   <param name="max_samples" value="1000" />
