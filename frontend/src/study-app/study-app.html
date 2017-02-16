@@ -1,6 +1,7 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/app-route/app-location.html">
 <link rel="import" href="../../bower_components/app-route/app-route.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../../bower_components/paper-styles/color.html">
 <link rel="import" href="../../bower_components/paper-styles/typography.html">
@@ -39,7 +40,7 @@
 
     <iron-pages selected="[[routeData.view]]" attr-for-selected="name">
       <study-start name="start" route="{{route}}" ros="{{ros}}"></study-start>
-      <study-experiment name="experiment"></study-experiment>
+      <study-experiment name="experiment" ros="{{ros}}" route="{{subroute}}"></study-experiment>
     </iron-pages>
 
     <paper-dialog id="disconnectDialog" modal>

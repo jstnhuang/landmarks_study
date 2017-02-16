@@ -1,6 +1,4 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="../../bower_components/app-route/app-location.html">
-<link rel="import" href="../../bower_components/app-route/app-route.html">
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
@@ -33,12 +31,6 @@
         height: 100%;
       }
     </style>
-    <app-location route="{{route}}"></app-location>
-    <app-route
-      route="{{route}}"
-      pattern="/:view"
-      data="{{routeData}}"
-    ></app-route>
     <ros-topic
       id="topic"
       topic="user_actions"
@@ -69,6 +61,7 @@
       is: 'study-start',
 
       properties: {
+        ros: Object,
         route: Object,
       },
 
@@ -89,6 +82,7 @@
           },
         };
         this.$.topic.publish(msg);
+        this.set('route.path', '/experiment/' + id + '/0');
       },
     });
   </script>
