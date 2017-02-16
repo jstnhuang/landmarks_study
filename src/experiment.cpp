@@ -60,6 +60,12 @@ Experiment::Experiment(const MessageStoreProxy& participant_db,
 void Experiment::ProcessAction(const landmarks_study::UserAction& action) {
   const std::string& task_id =
       TaskId(action.participant_id, action.task_number, task_list_);
+  if (task_id == kEndTask) {
+    ClearState();
+    ClearTestVisualization();
+    ClearAlignmentVisualization();
+    return;
+  }
   if (action.action == landmarks_study::UserAction::LOAD) {
     // Save current ROI
     if (task_.id != "") {
@@ -89,6 +95,8 @@ void Experiment::ClearState() {
   task_ = task;
   scene_.reset(new sensor_msgs::PointCloud2);
   test_scene_.reset(new sensor_msgs::PointCloud2);
+  rapid_msgs::StaticCloud cloud;
+  landmark_ = cloud;
 }
 
 void Experiment::SaveTask() {

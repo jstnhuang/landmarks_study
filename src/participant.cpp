@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "landmarks_study/experiment_constants.h"
+
 namespace study {
 std::vector<int> TaskOrder(const std::string& participant_id,
                            const int num_tasks) {
@@ -25,6 +27,9 @@ std::vector<int> TaskOrder(const std::string& participant_id,
 std::string TaskId(const std::string& participant_id, const int task_number,
                    const std::vector<std::string>& task_list) {
   std::vector<int> task_order = TaskOrder(participant_id, task_list.size());
+  if (static_cast<size_t>(task_number) >= task_order.size()) {
+    return kEndTask;
+  }
   int task_id = task_order[task_number];
   return task_list[task_id];
 }
