@@ -156,9 +156,9 @@ void Experiment::Load(const std::string& participant_id,
   GetTask(participant_, task_id, &task_);
   task_.id = task_id;
   if (task_.landmark_id != "") {
-    ROS_INFO("Task %s already in DB.", participant_id.c_str());
+    ROS_INFO("Task %s already in DB.", task_id.c_str());
   } else {
-    ROS_INFO("Task %s not in DB.", participant_id.c_str());
+    ROS_INFO("Task %s not in DB.", task_id.c_str());
   }
   ROS_INFO("%ld actions recorded for task %s", task_.actions.size(),
            task_.id.c_str());
