@@ -1,9 +1,8 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="../../bower_components/paper-button/paper-button.html">
-<link rel="import" href="../../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../bower_components/app-route/app-location.html">
 <link rel="import" href="../../bower_components/app-route/app-route.html">
-<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../bower_components/ros-topic/ros-topic.html">
 
 <dom-module id="study-start">
@@ -28,9 +27,22 @@
       pattern="/:view"
       data="{{routeData}}"
     ></app-route>
+    <ros-topic
+      id="topic"
+      topic="user_actions"
+      ros="{{ros}}"
+      msg-type="landmarks_study/UserAction"
+    ></ros-topic>
+
     <h1>CustomLandmarks study</h1>
-    <paper-input always-float-label label="Participant ID"></paper-input>
-    <paper-button>Start</paper-button>
+    <paper-input id="participantInput"
+      always-float-label
+      auto-validate
+      error-message="Participant ID required."
+      label="Participant ID"
+      required
+    ></paper-input>
+    <paper-button on-tap="handleStart">Start</paper-button>
   </template>
 
   <script>
@@ -42,6 +54,24 @@
         route: Object,
       },
 
+      handleStart: function() {
+        var id = this.$.participantInput.value;
+        if (!id) {
+          this.$.participantInput.validate();
+          return;
+        }
+        var now = Date.now();
+        var msg = {
+          action: 'load task',
+          participant_id: id,
+          task_number: 0,
+          stamp: {
+            secs: Math.floor(now / 1000),
+            nsecs: (now % 1000) * 1000000,
+          },
+        };
+        this.$.topic.publish(msg);
+      },
     });
   </script>
 </dom-module>
