@@ -31,13 +31,6 @@
         height: 100%;
       }
     </style>
-    <ros-topic
-      id="topic"
-      topic="user_actions"
-      ros="{{ros}}"
-      msg-type="landmarks_study/UserAction"
-    ></ros-topic>
-
     <div class="layout vertical main">
       <div class="flex"></div>
       <h1>CustomLandmarks study</h1>
@@ -71,17 +64,6 @@
           this.$.participantInput.validate();
           return;
         }
-        var now = Date.now();
-        var msg = {
-          action: 'load task',
-          participant_id: id,
-          task_number: 0,
-          stamp: {
-            secs: Math.floor(now / 1000),
-            nsecs: (now % 1000) * 1000000,
-          },
-        };
-        this.$.topic.publish(msg);
         this.set('route.path', '/experiment/' + id + '/0');
       },
     });

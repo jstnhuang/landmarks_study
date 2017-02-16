@@ -88,6 +88,10 @@
         },
       },
 
+      observers: [
+        '_routeChanged(ros, routeData.user, routeData.taskNum)',
+      ],
+
       ready: function() {
       },
 
@@ -144,6 +148,30 @@
         this.$.rviz.loadConfig(config);
       },
 
+      _routeChanged: function(ros, user, taskNum) {
+        if (user == "" || taskNum == "") {
+          return;
+        }
+
+        this.debounce('load_edit', function() {
+          // Load the task
+          var now = Date.now();
+          var msg = {
+            action: 'load task',
+            participant_id: user,
+            task_number: parseInt(taskNum),
+            stamp: {
+              secs: Math.floor(now / 1000),
+              nsecs: (now % 1000) * 1000000,
+            },
+          };
+
+          this.$.topic.publish(msg);
+
+          this.handleEdit();
+        }, 100);
+      },
+
       handleEdit: function() {
         var participantId = this.routeData.user;
         var taskNum = parseInt(this.routeData.taskNum);
@@ -197,17 +225,6 @@
         };
         this.$.topic.publish(msg);
 
-        msg = {
-          action: 'load task',
-          participant_id: participantId,
-          task_number: taskNum + 1,
-          stamp: {
-            secs: Math.floor(now / 1000),
-            nsecs: (now % 1000) * 1000000,
-          },
-        };
-        this.$.topic.publish(msg);
-        this.isEditing = true;
         this.set('routeData.taskNum', taskNum + 1);
       },
     });
