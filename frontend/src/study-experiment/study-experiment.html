@@ -1,9 +1,13 @@
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 <link rel="import" href="../../bower_components/app-route/app-route.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-styles/color.html">
 <link rel="import" href="../../bower_components/ros-rviz/ros-rviz.html">
 
 <dom-module id="study-experiment">
   <template>
+    <style include="iron-flex"></style>
     <style>
       :host {
         display: block;
@@ -19,15 +23,54 @@
         height: 100%;
         width: 20%;
       }
+      paper-button {
+        background-color: #fff;
+        margin: 0px auto;
+        width: 80%;
+        @apply(--paper-font-button);
+      }
+      paper-button:hover {
+        background-color: var(--paper-grey-300);
+      }
+      paper-button + paper-button {
+        margin-top: 20px;
+      }
     </style>
     <app-route
       route="{{route}}"
       pattern="/:user/:taskNum"
       data="{{routeData}}"
     ></app-route>
+    <ros-topic
+      id="topic"
+      topic="user_actions"
+      ros="{{ros}}"
+      msg-type="landmarks_study/UserAction"
+    ></ros-topic>
     <ros-rviz id="rviz" ros="{{ros}}"></ros-rviz>
-    <div class="buttons">
-      Buttons
+    <div class="buttons layout vertical">
+      <div class="flex"></div>
+      <paper-button
+        class="edit"
+        disabled="[[isEditing]]"
+        on-tap="handleEdit"
+        raised
+        title="Edit this landmark"
+      >Edit</paper-button>
+      <paper-button
+        class="test"
+        disabled="[[!isEditing]]"
+        on-tap="handleTest"
+        raised
+        title="Try this landmark on a test scene"
+      >Test</paper-button>
+      <paper-button
+        class="next"
+        on-tap="handleNext"
+        raised
+        title="Save this landmark and go to the next task"
+      >Next task</paper-button>
+      <div class="flex"></div>
     </div>
   </template>
 
@@ -39,6 +82,13 @@
       properties: {
         ros: Object,
         route: Object,
+        isEditing: {
+          type: Boolean,
+          value: true,
+        },
+      },
+
+      ready: function() {
       },
 
       attached: function() {
@@ -79,11 +129,84 @@
                 topic: '/alignment',
               },
               isShown: true,
+            }, {
+              type: 'pointCloud2',
+              name: 'Output',
+              options: {
+                size: 0.01,
+                topic: '/output',
+              },
+              isShown: true,
             }
           ],
           sidebarOpened: false,
         };
         this.$.rviz.loadConfig(config);
+      },
+
+      handleEdit: function() {
+        var participantId = this.routeData.user;
+        var taskNum = parseInt(this.routeData.taskNum);
+        var now = Date.now();
+        var msg = {
+          action: 'edit landmark',
+          participant_id: participantId,
+          task_number: taskNum,
+          stamp: {
+            secs: Math.floor(now / 1000),
+            nsecs: (now % 1000) * 1000000,
+          },
+        };
+        this.$.topic.publish(msg);
+        this.$.rviz.set('displays.3.isShown', false);
+        this.$.rviz.set('displays.4.isShown', false);
+        this.isEditing = true;
+      },
+
+      handleTest: function() {
+        var participantId = this.routeData.user;
+        var taskNum = parseInt(this.routeData.taskNum);
+        var now = Date.now();
+        var msg = {
+          action: 'test landmark',
+          participant_id: participantId,
+          task_number: taskNum,
+          stamp: {
+            secs: Math.floor(now / 1000),
+            nsecs: (now % 1000) * 1000000,
+          },
+        };
+        this.$.rviz.set('displays.3.isShown', true);
+        this.$.rviz.set('displays.4.isShown', true);
+        this.$.topic.publish(msg);
+        this.isEditing = false;
+      },
+
+      handleNext: function() {
+        var participantId = this.routeData.user;
+        var taskNum = parseInt(this.routeData.taskNum);
+        var now = Date.now();
+        var msg = {
+          action: 'save landmark',
+          participant_id: participantId,
+          task_number: taskNum,
+          stamp: {
+            secs: Math.floor(now / 1000),
+            nsecs: (now % 1000) * 1000000,
+          },
+        };
+        this.$.topic.publish(msg);
+
+        msg = {
+          action: 'load task',
+          participant_id: participantId,
+          task_number: taskNum + 1,
+          stamp: {
+            secs: Math.floor(now / 1000),
+            nsecs: (now % 1000) * 1000000,
+          },
+        };
+        this.$.topic.publish(msg);
       },
     });
   </script>
