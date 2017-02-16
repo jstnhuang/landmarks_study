@@ -8,8 +8,8 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   message_generation
   mongodb_store
-  object_search
   pcl_ros
+  rapid_db
   rapid_msgs
   rapid_perception
   roscpp
