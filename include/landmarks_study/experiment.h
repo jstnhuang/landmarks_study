@@ -10,9 +10,9 @@
 #include "rapid_perception/pose_estimation.h"
 #include "sensor_msgs/PointCloud2.h"
 
+#include "landmarks_study/Event.h"
 #include "landmarks_study/Participant.h"
 #include "landmarks_study/Task.h"
-#include "landmarks_study/UserAction.h"
 
 namespace study {
 class Experiment {
@@ -27,24 +27,20 @@ class Experiment {
              const std::vector<std::string>& task_list);
 
   // Main event handler.
-  void ProcessAction(const landmarks_study::UserAction& action);
+  void ProcessEvent(const landmarks_study::Event& event);
 
  private:
   // Display a visualization of the demonstration scene.
-  void Load(const landmarks_study::UserAction& action,
-            const std::string& task_name);
+  void Load(const landmarks_study::Event& event, const std::string& task_name);
 
   // Start the ROI server.
-  void Edit(const landmarks_study::UserAction& action,
-            const std::string& task_name);
+  void Edit(const landmarks_study::Event& event, const std::string& task_name);
 
   // Load the test scene and evaluate the landmark.
-  void Test(const landmarks_study::UserAction& action,
-            const std::string& task_name);
+  void Test(const landmarks_study::Event& event, const std::string& task_name);
 
   // Save the user's ROI.
-  void Save(const landmarks_study::UserAction& action,
-            const std::string& task_name);
+  void Save(const landmarks_study::Event& event, const std::string& task_name);
 
   // Updates or inserts a participant into the database.
   bool SaveParticipant(const landmarks_study::Participant& participant);

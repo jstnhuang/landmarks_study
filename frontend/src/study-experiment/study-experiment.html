@@ -43,9 +43,9 @@
     ></app-route>
     <ros-topic
       id="topic"
-      topic="user_actions"
+      topic="experiment_events"
       ros="{{ros}}"
-      msg-type="landmarks_study/UserAction"
+      msg-type="landmarks_study/Event"
     ></ros-topic>
     <ros-rviz id="rviz" ros="{{ros}}"></ros-rviz>
     <div class="buttons layout vertical">
@@ -157,7 +157,7 @@
           // Load the task
           var now = Date.now();
           var msg = {
-            action: 'load task',
+            type: 'load task',
             participant_name: user,
             task_number: parseInt(taskNum),
             stamp: {
@@ -177,7 +177,7 @@
         var taskNum = parseInt(this.routeData.taskNum);
         var now = Date.now();
         var msg = {
-          action: 'edit landmark',
+          type: 'edit landmark',
           participant_name: participantName,
           task_number: taskNum,
           stamp: {
@@ -196,7 +196,7 @@
         var taskNum = parseInt(this.routeData.taskNum);
         var now = Date.now();
         var msg = {
-          action: 'test landmark',
+          type: 'test landmark',
           participant_name: participantName,
           task_number: taskNum,
           stamp: {
@@ -215,7 +215,7 @@
         var taskNum = parseInt(this.routeData.taskNum);
         var now = Date.now();
         var msg = {
-          action: 'save landmark',
+          type: 'save landmark',
           participant_name: participantName,
           task_number: taskNum,
           stamp: {

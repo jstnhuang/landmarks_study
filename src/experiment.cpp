@@ -19,14 +19,14 @@
 #include "rapid_perception/pose_estimation.h"
 #include "rapid_perception/random_heat_mapper.h"
 
+#include "landmarks_study/Event.h"
 #include "landmarks_study/Participant.h"
 #include "landmarks_study/Task.h"
-#include "landmarks_study/UserAction.h"
 #include "landmarks_study/experiment_constants.h"
 
 using landmarks_study::Participant;
 using landmarks_study::Task;
-using landmarks_study::UserAction;
+using landmarks_study::Event;
 using pcl::PointCloud;
 using pcl::PointXYZRGB;
 using rapid_msgs::Roi3D;
@@ -52,36 +52,35 @@ Experiment::Experiment(rapid::db::NameDb* participant_db,
       pose_estimator_(pose_estimator),
       task_list_(task_list) {}
 
-void Experiment::ProcessAction(const landmarks_study::UserAction& action) {
-  const string& task_name =
-      TaskName(action.participant_name, action.task_number);
+void Experiment::ProcessEvent(const Event& event) {
+  const string& task_name = TaskName(event.participant_name, event.task_number);
   if (task_name == kEndTask) {
     ClearTestVisualization();
     return;
   }
 
-  if (action.action == landmarks_study::UserAction::LOAD) {
-    Load(action, task_name);
-  } else if (action.action == landmarks_study::UserAction::EDIT) {
-    Edit(action, task_name);
-  } else if (action.action == landmarks_study::UserAction::TEST) {
-    Test(action, task_name);
-  } else if (action.action == landmarks_study::UserAction::SAVE) {
-    Save(action, task_name);
+  if (event.type == landmarks_study::Event::LOAD) {
+    Load(event, task_name);
+  } else if (event.type == landmarks_study::Event::EDIT) {
+    Edit(event, task_name);
+  } else if (event.type == landmarks_study::Event::TEST) {
+    Test(event, task_name);
+  } else if (event.type == landmarks_study::Event::SAVE) {
+    Save(event, task_name);
   } else {
-    ROS_ERROR("Unknown action: \"%s\"", action.action.c_str());
+    ROS_ERROR("Unknown event type: \"%s\"", event.type.c_str());
   }
 }
 
-void Experiment::Load(const UserAction& action, const string& task_name) {
+void Experiment::Load(const Event& event, const string& task_name) {
   ClearTestVisualization();
 
   // Load participant if already in the DB.
   Participant participant;
-  if (!participant_db_->Get(action.participant_name, &participant)) {
+  if (!participant_db_->Get(event.participant_name, &participant)) {
     ROS_INFO("Participant \"%s\" not in DB, inserting",
-             action.participant_name.c_str());
-    participant.name = action.participant_name;
+             event.participant_name.c_str());
+    participant.name = event.participant_name;
     participant.tasks.clear();
   }
 
@@ -94,10 +93,10 @@ void Experiment::Load(const UserAction& action, const string& task_name) {
     participant.tasks.push_back(t);
     task = &participant.tasks[participant.tasks.size() - 1];
   }
-  ROS_INFO("%ld events recorded for task \"%s\"", task->actions.size(),
+  ROS_INFO("%ld events recorded for task \"%s\"", task->events.size(),
            task->name.c_str());
 
-  task->actions.push_back(action);
+  task->events.push_back(event);
   SaveParticipant(participant);
 
   // Publish scene
@@ -109,22 +108,22 @@ void Experiment::Load(const UserAction& action, const string& task_name) {
            task->name.c_str());
 }
 
-void Experiment::Edit(const UserAction& action, const string& task_name) {
+void Experiment::Edit(const Event& event, const string& task_name) {
   ClearTestVisualization();
 
   Participant participant;
-  if (!participant_db_->Get(action.participant_name, &participant)) {
+  if (!participant_db_->Get(event.participant_name, &participant)) {
     ROS_ERROR("Error editing participant \"%s\"",
-              action.participant_name.c_str());
+              event.participant_name.c_str());
     return;
   }
   Task* task = GetTask(participant, task_name);
   if (task == NULL) {
     ROS_ERROR("Error editing task \"%s\" for participant \"%s\"",
-              task_name.c_str(), action.participant_name.c_str());
+              task_name.c_str(), event.participant_name.c_str());
     return;
   }
-  task->actions.push_back(action);
+  task->events.push_back(event);
   SaveParticipant(participant);
 
   const Roi3D& roi = task->roi;
@@ -143,23 +142,23 @@ void Experiment::Edit(const UserAction& action, const string& task_name) {
   scene_pub_.publish(scene);
 
   ROS_INFO("Editing ROI for participant \"%s\", task \"%s\"",
-           action.participant_name.c_str(), task_name.c_str());
+           event.participant_name.c_str(), task_name.c_str());
 }
 
-void Experiment::Test(const UserAction& action, const string& task_name) {
+void Experiment::Test(const Event& event, const string& task_name) {
   Participant participant;
-  if (!participant_db_->Get(action.participant_name, &participant)) {
+  if (!participant_db_->Get(event.participant_name, &participant)) {
     ROS_ERROR("Error testing participant \"%s\"",
-              action.participant_name.c_str());
+              event.participant_name.c_str());
     return;
   }
   Task* task = GetTask(participant, task_name);
   if (task == NULL) {
     ROS_ERROR("Error testing task \"%s\" for participant \"%s\"",
-              task_name.c_str(), action.participant_name.c_str());
+              task_name.c_str(), event.participant_name.c_str());
     return;
   }
-  task->actions.push_back(action);
+  task->events.push_back(event);
 
   // Get the landmark.
   sensor_msgs::PointCloud2 scene;
@@ -217,20 +216,20 @@ void Experiment::Test(const UserAction& action, const string& task_name) {
            task->name.c_str());
 }
 
-void Experiment::Save(const UserAction& action, const string& task_name) {
+void Experiment::Save(const Event& event, const string& task_name) {
   Participant participant;
-  if (!participant_db_->Get(action.participant_name, &participant)) {
+  if (!participant_db_->Get(event.participant_name, &participant)) {
     ROS_ERROR("Error saving participant \"%s\"",
-              action.participant_name.c_str());
+              event.participant_name.c_str());
     return;
   }
   Task* task = GetTask(participant, task_name);
   if (task == NULL) {
     ROS_ERROR("Error saving task \"%s\" for participant \"%s\"",
-              task_name.c_str(), action.participant_name.c_str());
+              task_name.c_str(), event.participant_name.c_str());
     return;
   }
-  task->actions.push_back(action);
+  task->events.push_back(event);
 
   task->roi = roi_.roi();
   SaveParticipant(participant);

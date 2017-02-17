@@ -1,19 +1,14 @@
-#include "ros/ros.h"
-
 #include <string>
 #include <vector>
 
 #include "rapid_db/name_db.hpp"
-#include "rapid_msgs/GetStaticCloud.h"
-#include "rapid_msgs/ListStaticClouds.h"
-#include "rapid_msgs/RemoveStaticCloud.h"
-#include "rapid_msgs/SaveStaticCloud.h"
+#include "rapid_perception/box3d_roi_server.h"
 #include "rapid_perception/pose_estimation.h"
 #include "rapid_perception/random_heat_mapper.h"
+#include "ros/ros.h"
 #include "sensor_msgs/PointCloud2.h"
 
 #include "landmarks_study/experiment.h"
-#include "landmarks_study/UserAction.h"
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "study_node");
@@ -51,7 +46,7 @@ int main(int argc, char** argv) {
                                scene_pub, alignment_pub, output_pub,
                                pose_estimator, task_list);
   ros::Subscriber action_sub = nh.subscribe(
-      "user_actions", 10, &study::Experiment::ProcessAction, &experiment);
+      "experiment_events", 10, &study::Experiment::ProcessEvent, &experiment);
   ros::spin();
   return 0;
 }

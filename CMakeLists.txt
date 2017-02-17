@@ -58,9 +58,9 @@ find_package(PCL REQUIRED)
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
+  Event.msg
   Participant.msg
   Task.msg
-  UserAction.msg
 )
 
 ## Generate services in the 'srv' folder
