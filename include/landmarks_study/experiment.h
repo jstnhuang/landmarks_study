@@ -24,15 +24,18 @@ class Experiment {
              const ros::Publisher& scene_pub,
              const ros::Publisher& alignment_pub,
              const ros::Publisher& output_pub, const ros::Publisher& status_pub,
+             const ros::Publisher& description_pub,
              const rapid::perception::PoseEstimator& pose_estimator,
-             const std::vector<std::string>& task_list);
+             const std::vector<std::string>& task_list,
+             const std::vector<std::string>& task_descriptions);
 
   // Main event handler.
   void ProcessEvent(const landmarks_study::Event& event);
 
  private:
   // Display a visualization of the demonstration scene.
-  void Load(const landmarks_study::Event& event, const std::string& task_name);
+  void Load(const landmarks_study::Event& event, const std::string& task_name,
+            const std::string& task_description);
 
   // Start the ROI server.
   void Edit(const landmarks_study::Event& event, const std::string& task_name);
@@ -60,7 +63,8 @@ class Experiment {
   void TaskOrder(const std::string& participant, const int num_tasks,
                  std::vector<int>* order);
   // Return the name of the task for the (participant, task number) pair.
-  std::string TaskName(const std::string& participant, const int task_number);
+  void TaskInfo(const std::string& participant, const int task_number,
+                std::string* task_name, std::string* task_description);
 
   // Return transformations of demonstration/test scene names.
   std::string TrainSceneName(const std::string& task_name);
@@ -77,8 +81,10 @@ class Experiment {
   ros::Publisher alignment_pub_;
   ros::Publisher output_pub_;
   ros::Publisher status_pub_;
+  ros::Publisher description_pub_;
   rapid::perception::PoseEstimator pose_estimator_;
   std::vector<std::string> task_list_;
+  std::vector<std::string> task_descriptions_;
 
   std::map<std::string, sensor_msgs::PointCloud2> scene_cache_;
 };

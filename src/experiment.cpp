@@ -19,6 +19,7 @@
 #include "rapid_perception/box3d_roi_server.h"
 #include "rapid_perception/pose_estimation.h"
 #include "rapid_perception/random_heat_mapper.h"
+#include "std_msgs/String.h"
 
 #include "landmarks_study/Event.h"
 #include "landmarks_study/Participant.h"
@@ -41,8 +42,10 @@ Experiment::Experiment(
     rapid::db::NameDb* scene_db, const rapid::perception::Box3DRoiServer& roi,
     const ros::Publisher& scene_pub, const ros::Publisher& alignment_pub,
     const ros::Publisher& output_pub, const ros::Publisher& status_pub,
+    const ros::Publisher& description_pub,
     const rapid::perception::PoseEstimator& pose_estimator,
-    const std::vector<string>& task_list)
+    const std::vector<string>& task_list,
+    const std::vector<string>& task_descriptions)
     : participant_db_(participant_db),
       landmark_db_(landmark_db),
       scene_db_(scene_db),
@@ -51,12 +54,17 @@ Experiment::Experiment(
       alignment_pub_(alignment_pub),
       output_pub_(output_pub),
       status_pub_(status_pub),
+      description_pub_(description_pub),
       pose_estimator_(pose_estimator),
       task_list_(task_list),
+      task_descriptions_(task_descriptions),
       scene_cache_() {}
 
 void Experiment::ProcessEvent(const Event& event) {
-  const string& task_name = TaskName(event.participant_name, event.task_number);
+  string task_name;
+  string task_description;
+  TaskInfo(event.participant_name, event.task_number, &task_name,
+           &task_description);
   if (task_name == kEndTask) {
     ClearTestVisualization();
     Status status;
@@ -71,7 +79,7 @@ void Experiment::ProcessEvent(const Event& event) {
   status_pub_.publish(status);
 
   if (event.type == landmarks_study::Event::LOAD) {
-    Load(event, task_name);
+    Load(event, task_name, task_description);
   } else if (event.type == landmarks_study::Event::EDIT) {
     Edit(event, task_name);
   } else if (event.type == landmarks_study::Event::TEST) {
@@ -83,7 +91,8 @@ void Experiment::ProcessEvent(const Event& event) {
   }
 }
 
-void Experiment::Load(const Event& event, const string& task_name) {
+void Experiment::Load(const Event& event, const string& task_name,
+                      const string& task_description) {
   ClearTestVisualization();
 
   // Load participant if already in the DB.
@@ -113,6 +122,11 @@ void Experiment::Load(const Event& event, const string& task_name) {
 
   task->events.push_back(event);
   SaveParticipant(participant);
+
+  // Publish description
+  std_msgs::String description;
+  description.data = task_description;
+  description_pub_.publish(description);
 
   // Publish scene
   sensor_msgs::PointCloud2 scene;
@@ -418,15 +432,17 @@ void Experiment::TaskOrder(const string& participant_name, const int num_tasks,
   std::random_shuffle(order->begin() + 1, order->end());
 }
 
-string Experiment::TaskName(const string& participant_name,
-                            const int task_number) {
+void Experiment::TaskInfo(const string& participant_name, const int task_number,
+                          string* task_name, string* task_description) {
   std::vector<int> task_order;
   TaskOrder(participant_name, task_list_.size(), &task_order);
   if (static_cast<size_t>(task_number) >= task_order.size()) {
-    return kEndTask;
+    *task_name = kEndTask;
+    return;
   }
-  int task_name = task_order[task_number];
-  return task_list_[task_name];
+  int task_id = task_order[task_number];
+  *task_name = task_list_[task_id];
+  *task_description = task_descriptions_[task_id];
 }
 
 string Experiment::TrainSceneName(const string& task_name) { return task_name; }

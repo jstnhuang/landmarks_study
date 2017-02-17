@@ -3,7 +3,15 @@
   <arg name="debug" default="false" />
 
   <!-- List of tasks to include in the experiment -->
-  <rosparam param="experiment_tasks">['cans', 'marker_holder', 'drawer']</rosparam>
+  <rosparam param="experiment_tasks">['cans', 'bowls', 'drawer', 'marker_holder', 'tide', 'zone']</rosparam>
+  <rosparam param="experiment_task_descriptions">[
+    'The robot is going to pick up the rightmost can on the table. Create a landmark that can be used to accomplish this task.',
+    'The robot is going to take the bowls out of the shelf. It needs to find all of the bowls that are not underneath another bowl. Create a landmark that can be used to accomplish this task.',
+    'The robot is going to open or close one of the drawers. Create a landmark that can be used to accomplish this task.',
+    'The robot is going to place markers into an empty compartment in the wooden pencil holder. Create a landmark that can be used to accomplish this task.',
+    'The robot is going to pick up the Tide bottle. Create a landmark that can be used to accomplish this task.',
+    'The robot is going to place something (not shown) into the marked zone. To do this, it needs to know where the zone is. Create a landmark that can be used to accomplish this task.'
+  ]</rosparam>
 
   <!-- CustomLandmarks parameters -->
   <param name="leaf_size" value="0.0075" />

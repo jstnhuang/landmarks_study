@@ -60,10 +60,19 @@
       ros="{{ros}}"
       msg-type="landmarks_study/Status"
     ></ros-topic>
+    <ros-topic
+      auto
+      last-message="{{description}}"
+      topic="task_description"
+      ros="{{ros}}"
+      msg-type="std_msgs/String"
+    ></ros-topic>
 
     <ros-rviz id="rviz" ros="{{ros}}"></ros-rviz>
     <div class="buttons layout vertical">
-      <div class="flex"></div>
+      <div class="flex layout horizontal status start">
+        <p>[[description.data]]</p>
+      </div>
       <paper-button
         class="edit"
         disabled="[[isEditing]]"
