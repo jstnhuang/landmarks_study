@@ -50,7 +50,8 @@ Experiment::Experiment(rapid::db::NameDb* participant_db,
       alignment_pub_(alignment_pub),
       output_pub_(output_pub),
       pose_estimator_(pose_estimator),
-      task_list_(task_list) {}
+      task_list_(task_list),
+      scene_cache_() {}
 
 void Experiment::ProcessEvent(const Event& event) {
   const string& task_name = TaskName(event.participant_name, event.task_number);
@@ -101,7 +102,7 @@ void Experiment::Load(const Event& event, const string& task_name) {
 
   // Publish scene
   sensor_msgs::PointCloud2 scene;
-  scene_db_->Get(TrainSceneName(task_name), &scene);
+  GetScene(TrainSceneName(task_name), &scene);
   scene_pub_.publish(scene);
 
   ROS_INFO("Loaded participant \"%s\", task \"%s\"", participant.name.c_str(),
@@ -138,7 +139,7 @@ void Experiment::Edit(const Event& event, const string& task_name) {
 
   // Publish scene
   sensor_msgs::PointCloud2 scene;
-  scene_db_->Get(TrainSceneName(task_name), &scene);
+  GetScene(TrainSceneName(task_name), &scene);
   scene_pub_.publish(scene);
 
   ROS_INFO("Editing ROI for participant \"%s\", task \"%s\"",
@@ -162,7 +163,7 @@ void Experiment::Test(const Event& event, const string& task_name) {
 
   // Get the landmark.
   sensor_msgs::PointCloud2 scene;
-  scene_db_->Get(TrainSceneName(task_name), &scene);
+  GetScene(TrainSceneName(task_name), &scene);
   task->roi = roi_.roi();
   rapid_msgs::StaticCloud landmark;
   ComputeLandmark(task->roi, scene, &landmark);
@@ -172,7 +173,7 @@ void Experiment::Test(const Event& event, const string& task_name) {
 
   // Publish the test scene.
   sensor_msgs::PointCloud2 test_scene;
-  scene_db_->Get(TestSceneName(task_name), &test_scene);
+  GetScene(TestSceneName(task_name), &test_scene);
   scene_pub_.publish(test_scene);
 
   ROS_INFO("Testing landmark for participant \"%s\", task \"%s\"",
@@ -400,5 +401,19 @@ string Experiment::TaskName(const string& participant_name,
 string Experiment::TrainSceneName(const string& task_name) { return task_name; }
 string Experiment::TestSceneName(const string& task_name) {
   return task_name + "_test";
+}
+
+bool Experiment::GetScene(const std::string& scene_name,
+                          sensor_msgs::PointCloud2* output) {
+  std::map<string, sensor_msgs::PointCloud2>::iterator it =
+      scene_cache_.find(scene_name);
+  if (it == scene_cache_.end()) {
+    bool success = scene_db_->Get(scene_name, output);
+    scene_cache_[scene_name] = *output;
+    return success;
+  } else {
+    *output = it->second;
+    return true;
+  }
 }
 }  // namespace study

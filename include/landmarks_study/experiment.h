@@ -1,6 +1,7 @@
 #ifndef _STUDY_EXPERIMENT_H_
 #define _STUDY_EXPERIMENT_H_
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -65,6 +66,9 @@ class Experiment {
   std::string TrainSceneName(const std::string& task_name);
   std::string TestSceneName(const std::string& task_name);
 
+  bool GetScene(const std::string& scene_name,
+                sensor_msgs::PointCloud2* output);
+
   rapid::db::NameDb* participant_db_;
   rapid::db::NameDb* landmark_db_;
   rapid::db::NameDb* scene_db_;
@@ -74,6 +78,8 @@ class Experiment {
   ros::Publisher output_pub_;
   rapid::perception::PoseEstimator pose_estimator_;
   std::vector<std::string> task_list_;
+
+  std::map<std::string, sensor_msgs::PointCloud2> scene_cache_;
 };
 }  // namespace study
 
