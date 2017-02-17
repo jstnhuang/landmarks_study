@@ -10,7 +10,7 @@
     "app-route": "PolymerElements/app-route#^0.9.3",
     "paper-dialog": "PolymerElements/paper-dialog#^1.1.0",
     "iron-pages": "PolymerElements/iron-pages#^1.0.8",
-    "ros-rviz": "jstnhuang/ros-rviz#^0.9.3"
+    "ros-rviz": "jstnhuang/ros-rviz#^0.10.0"
   },
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
