@@ -167,9 +167,6 @@ void Experiment::Test(const Event& event, const string& task_name) {
   rapid_msgs::StaticCloud landmark;
   ComputeLandmark(task->roi, scene, &landmark);
 
-  // Save the ROI.
-  SaveParticipant(participant);
-
   // Stop publishing the box
   roi_.Stop();
 
@@ -214,6 +211,15 @@ void Experiment::Test(const Event& event, const string& task_name) {
   ROS_INFO("Testing took %f seconds for participant \"%s\", task \"%s\"",
            watch.getTimeSeconds(), participant.name.c_str(),
            task->name.c_str());
+
+  Event finished;
+  finished.type = Event::FINISHED_TEST;
+  finished.participant_name = participant.name;
+  finished.task_number = event.task_number;
+  finished.stamp = ros::Time::now();
+  task->events.push_back(finished);
+
+  SaveParticipant(participant);
 }
 
 void Experiment::Save(const Event& event, const string& task_name) {
