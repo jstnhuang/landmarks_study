@@ -52,12 +52,14 @@
       <div class="flex"></div>
       <paper-button
         class="edit"
+        disabled="[[isEditing]]"
         on-tap="handleEdit"
         raised
         title="Edit this landmark"
       >Edit</paper-button>
       <paper-button
         class="test"
+        disabled="[[!isEditing]]"
         on-tap="handleTest"
         raised
         title="Try this landmark on a test scene"
