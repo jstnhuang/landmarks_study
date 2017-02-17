@@ -70,9 +70,7 @@
 
     <ros-rviz id="rviz" ros="{{ros}}"></ros-rviz>
     <div class="buttons layout vertical">
-      <div class="flex layout horizontal status start">
-        <p>[[description.data]]</p>
-      </div>
+      <div class="flex status" inner-h-t-m-l="[[description.data]]"></div>
       <paper-button
         class="edit"
         disabled="[[isEditing]]"
@@ -110,7 +108,7 @@
         route: Object,
         isEditing: {
           type: Boolean,
-          value: true,
+          value: false,
         },
         routeData: {
           type: Object,
@@ -203,8 +201,6 @@
           };
 
           this.$.topic.publish(msg);
-
-          this.handleEdit();
         }, 100);
       },
 
