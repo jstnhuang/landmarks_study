@@ -110,6 +110,10 @@
           type: Boolean,
           value: false,
         },
+        isAttached: {
+          type: Boolean,
+          value: false,
+        },
         routeData: {
           type: Object,
           value: function() {
@@ -123,6 +127,7 @@
 
       observers: [
         '_routeChanged(ros, routeData.user, routeData.taskNum)',
+        '_isEditingChanged(isAttached, isEditing)',
       ],
 
       ready: function() {
@@ -150,7 +155,7 @@
               options: {
                 topic: '/roi',
               },
-              isShown: true,
+              isShown: false,
             }, {
               type: 'pointCloud2',
               name: 'Scene',
@@ -166,7 +171,7 @@
                 size: 0.01,
                 topic: '/alignment',
               },
-              isShown: true,
+              isShown: false,
             }, {
               type: 'pointCloud2',
               name: 'Output',
@@ -174,12 +179,13 @@
                 size: 0.02,
                 topic: '/output',
               },
-              isShown: true,
+              isShown: false,
             }
           ],
           sidebarOpened: false,
         };
         this.$.rviz.loadConfig(config);
+        this.isAttached = true;
       },
 
       _routeChanged: function(ros, user, taskNum) {
@@ -205,6 +211,22 @@
         }, 100);
       },
 
+      _isEditingChanged: function(isAttached, isEditing) {
+        if (!isAttached) {
+          return;
+        }
+        if (isEditing) {
+          this.$.rviz.set('displays.1.isShown', true);
+          this.$.rviz.set('displays.3.isShown', false);
+          this.$.rviz.set('displays.4.isShown', false);
+        }
+        if (!isEditing) {
+          this.$.rviz.set('displays.1.isShown', false);
+          this.$.rviz.set('displays.3.isShown', true);
+          this.$.rviz.set('displays.4.isShown', true);
+        }
+      },
+
       handleEdit: function() {
         var participantName = this.routeData.user;
         var taskNum = parseInt(this.routeData.taskNum);
@@ -219,8 +241,6 @@
           },
         };
         this.$.topic.publish(msg);
-        this.$.rviz.set('displays.3.isShown', false);
-        this.$.rviz.set('displays.4.isShown', false);
         this.isEditing = true;
       },
 
@@ -237,8 +257,6 @@
             nsecs: (now % 1000) * 1000000,
           },
         };
-        this.$.rviz.set('displays.3.isShown', true);
-        this.$.rviz.set('displays.4.isShown', true);
         this.$.topic.publish(msg);
         this.isEditing = false;
       },
@@ -264,7 +282,6 @@
       handleStatus: function(evt) {
         if (evt.detail.type === 'end of study') {
           this.$.statusTopic.unsubscribe();
-          console.log('going to end page');
           this.set('mainRoute.path', '/end');
         }
       },

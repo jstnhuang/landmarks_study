@@ -123,6 +123,8 @@ void Experiment::Load(const Event& event, const string& task_name,
   task->events.push_back(event);
   SaveParticipant(participant);
 
+  roi_.Stop();
+
   // Publish description
   std_msgs::String description;
   description.data = task_description;
