@@ -6,6 +6,7 @@
 <link rel="import" href="../../bower_components/paper-styles/color.html">
 <link rel="import" href="../../bower_components/paper-styles/typography.html">
 <link rel="import" href="../../bower_components/ros-websocket/ros-websocket.html">
+<link rel="import" href="../study-end/study-end.html">
 <link rel="import" href="../study-experiment/study-experiment.html">
 <link rel="import" href="../study-start/study-start.html">
 
@@ -41,6 +42,7 @@
     <iron-pages selected="[[routeData.view]]" attr-for-selected="name">
       <study-start name="start" route="{{route}}" ros="{{ros}}"></study-start>
       <study-experiment name="experiment" ros="{{ros}}" route="{{subroute}}"></study-experiment>
+      <study-end name="end"></study-end>
     </iron-pages>
 
     <paper-dialog id="disconnectDialog" modal>

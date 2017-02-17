@@ -1,0 +1,50 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/ros-topic/ros-topic.html">
+
+<dom-module id="study-end">
+  <template>
+    <style include="iron-flex"></style>
+    <style>
+      :host {
+        display: block;
+        height: 100%;
+        max-width: 400px;
+        margin: 0px auto;
+      }
+      h1 {
+        margin-top: 0;
+      }
+      p {
+        margin-bottom: 0;
+      }
+      div.main {
+        height: 100%;
+      }
+    </style>
+    <div class="layout vertical main">
+      <div class="flex"></div>
+      <div>
+      <h1>Thank you!</h1>
+      <p>
+        This concludes the user study.
+        Please let the experimenter know that you are done.
+      </p>
+      </div>
+      <div class="flex"></div>
+    </div>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'study-end',
+
+      properties: {
+        route: Object,
+      },
+    });
+  </script>
+</dom-module>
