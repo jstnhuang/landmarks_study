@@ -28,7 +28,7 @@
   <node name="message_store" pkg="mongodb_store" type="message_store_node.py" /> 
 
   <!-- The experiment server -->
-  <node if="$(arg debug)" pkg="landmarks_study" type="landmarks_study_node" name="landmarks_study_node" required="true" launch-prefix="xterm -e gdb -ex run --args">
+  <node if="$(arg debug)" pkg="landmarks_study" type="landmarks_study_node" name="landmarks_study_node" required="true" launch-prefix="xterm -e gdb --args">
     <remap from="cloud_in" to="head_mount_kinect/depth_registered/points" />
   </node>
   <node unless="$(arg debug)" pkg="landmarks_study" type="landmarks_study_node" name="landmarks_study_node" required="true">

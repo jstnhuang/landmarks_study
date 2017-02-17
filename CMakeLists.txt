@@ -80,6 +80,7 @@ add_message_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
+  rapid_msgs
 )
 
 ################################################
@@ -135,14 +136,10 @@ add_library(${PROJECT_NAME}_experiment src/experiment.cpp)
 add_dependencies(${PROJECT_NAME}_experiment ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}_experiment ${catkin_LIBRARIES})
 
-add_library(${PROJECT_NAME}_participant src/participant.cpp)
-add_dependencies(${PROJECT_NAME}_participant ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME}_participant ${catkin_LIBRARIES})
-
 ## Declare a C++ executable
 add_executable(${PROJECT_NAME}_node src/study_node.cpp)
-add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME}_experiment ${PROJECT_NAME}_participant ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME}_experiment ${PROJECT_NAME}_participant ${catkin_LIBRARIES})
+add_dependencies(${PROJECT_NAME}_node ${PROJECT_NAME}_experiment ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME}_experiment ${catkin_LIBRARIES})
 
 add_executable(${PROJECT_NAME}_scenes_main src/scenes_main.cpp)
 add_dependencies(${PROJECT_NAME}_scenes_main ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

@@ -52,14 +52,12 @@
       <div class="flex"></div>
       <paper-button
         class="edit"
-        disabled="[[isEditing]]"
         on-tap="handleEdit"
         raised
         title="Edit this landmark"
       >Edit</paper-button>
       <paper-button
         class="test"
-        disabled="[[!isEditing]]"
         on-tap="handleTest"
         raised
         title="Try this landmark on a test scene"
@@ -158,7 +156,7 @@
           var now = Date.now();
           var msg = {
             action: 'load task',
-            participant_id: user,
+            participant_name: user,
             task_number: parseInt(taskNum),
             stamp: {
               secs: Math.floor(now / 1000),
@@ -173,18 +171,19 @@
       },
 
       handleEdit: function() {
-        var participantId = this.routeData.user;
+        var participantName = this.routeData.user;
         var taskNum = parseInt(this.routeData.taskNum);
         var now = Date.now();
         var msg = {
           action: 'edit landmark',
-          participant_id: participantId,
+          participant_name: participantName,
           task_number: taskNum,
           stamp: {
             secs: Math.floor(now / 1000),
             nsecs: (now % 1000) * 1000000,
           },
         };
+        console.log('editing', msg);
         this.$.topic.publish(msg);
         this.$.rviz.set('displays.3.isShown', false);
         this.$.rviz.set('displays.4.isShown', false);
@@ -192,12 +191,12 @@
       },
 
       handleTest: function() {
-        var participantId = this.routeData.user;
+        var participantName = this.routeData.user;
         var taskNum = parseInt(this.routeData.taskNum);
         var now = Date.now();
         var msg = {
           action: 'test landmark',
-          participant_id: participantId,
+          participant_name: participantName,
           task_number: taskNum,
           stamp: {
             secs: Math.floor(now / 1000),
@@ -211,12 +210,12 @@
       },
 
       handleNext: function() {
-        var participantId = this.routeData.user;
+        var participantName = this.routeData.user;
         var taskNum = parseInt(this.routeData.taskNum);
         var now = Date.now();
         var msg = {
           action: 'save landmark',
-          participant_id: participantId,
+          participant_name: participantName,
           task_number: taskNum,
           stamp: {
             secs: Math.floor(now / 1000),

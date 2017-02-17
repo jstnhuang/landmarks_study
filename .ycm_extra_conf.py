@@ -61,6 +61,8 @@ flags = [
 '-I',
 '/usr/local/cuda/include',
 '-I',
+'../rapid/rapid_db/include',
+'-I',
 '../rapid/rapid_perception/include',
 '-I',
 '../rapid/rapid_utils/include',

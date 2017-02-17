@@ -1,5 +1,5 @@
 string action
-string participant_id
+string participant_name
 int32 task_number
 time stamp
 

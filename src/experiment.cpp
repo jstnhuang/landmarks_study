@@ -1,45 +1,47 @@
 #include "landmarks_study/experiment.h"
 
+#include <algorithm>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
 #include "Eigen/Dense"
-#include "mongodb_store/message_store.h"
 #include "pcl/filters/crop_box.h"
 #include "pcl/filters/voxel_grid.h"
 #include "pcl/point_cloud.h"
 #include "pcl/point_types.h"
 #include "pcl/common/time.h"
 #include "pcl_conversions/pcl_conversions.h"
+#include "rapid_db/name_db.hpp"
 #include "rapid_msgs/Roi3D.h"
 #include "rapid_msgs/StaticCloud.h"
 #include "rapid_perception/box3d_roi_server.h"
 #include "rapid_perception/pose_estimation.h"
 #include "rapid_perception/random_heat_mapper.h"
 
-#include "landmarks_study/participant.h"
 #include "landmarks_study/Participant.h"
 #include "landmarks_study/Task.h"
 #include "landmarks_study/UserAction.h"
 #include "landmarks_study/experiment_constants.h"
 
-using mongodb_store::MessageStoreProxy;
 using landmarks_study::Participant;
 using landmarks_study::Task;
 using landmarks_study::UserAction;
 using pcl::PointCloud;
 using pcl::PointXYZRGB;
+using rapid_msgs::Roi3D;
+using std::string;
 
 namespace study {
-Experiment::Experiment(const MessageStoreProxy& participant_db,
-                       const MessageStoreProxy& landmark_db,
-                       const MessageStoreProxy& scene_db,
+Experiment::Experiment(rapid::db::NameDb* participant_db,
+                       rapid::db::NameDb* landmark_db,
+                       rapid::db::NameDb* scene_db,
                        const rapid::perception::Box3DRoiServer& roi,
                        const ros::Publisher& scene_pub,
                        const ros::Publisher& alignment_pub,
                        const ros::Publisher& output_pub,
                        const rapid::perception::PoseEstimator& pose_estimator,
-                       const std::vector<std::string>& task_list)
+                       const std::vector<string>& task_list)
     : participant_db_(participant_db),
       landmark_db_(landmark_db),
       scene_db_(scene_db),
@@ -48,179 +50,145 @@ Experiment::Experiment(const MessageStoreProxy& participant_db,
       alignment_pub_(alignment_pub),
       output_pub_(output_pub),
       pose_estimator_(pose_estimator),
-      task_list_(task_list),
-      participant_(),
-      task_(),
-      scene_(new sensor_msgs::PointCloud2),
-      test_scene_(new sensor_msgs::PointCloud2),
-      landmark_() {
-  roi_.set_base_frame(kBaseFrame);
-}
+      task_list_(task_list) {}
 
 void Experiment::ProcessAction(const landmarks_study::UserAction& action) {
-  const std::string& task_id =
-      TaskId(action.participant_id, action.task_number, task_list_);
-  if (task_id == kEndTask) {
-    ClearState();
+  const string& task_name =
+      TaskName(action.participant_name, action.task_number);
+  if (task_name == kEndTask) {
     ClearTestVisualization();
-    ClearAlignmentVisualization();
     return;
   }
+
   if (action.action == landmarks_study::UserAction::LOAD) {
-    // Save current ROI
-    if (task_.id != "") {
-      SaveTask();
-    }
-    ClearState();
-    Load(action.participant_id, task_id);
-    task_.actions.push_back(action);
-    Edit(action.participant_id, task_id);
+    Load(action, task_name);
   } else if (action.action == landmarks_study::UserAction::EDIT) {
-    Edit(action.participant_id, task_id);
-    task_.actions.push_back(action);
+    Edit(action, task_name);
   } else if (action.action == landmarks_study::UserAction::TEST) {
-    Test(action.participant_id, task_id);
-    task_.actions.push_back(action);
+    Test(action, task_name);
   } else if (action.action == landmarks_study::UserAction::SAVE) {
-    SaveTask();
-    task_.actions.push_back(action);
+    Save(action, task_name);
   } else {
+    ROS_ERROR("Unknown action: \"%s\"", action.action.c_str());
   }
 }
 
-void Experiment::ClearState() {
-  Participant participant;
-  participant_ = participant;
-  Task task;
-  task_ = task;
-  scene_.reset(new sensor_msgs::PointCloud2);
-  test_scene_.reset(new sensor_msgs::PointCloud2);
-  rapid_msgs::StaticCloud cloud;
-  landmark_ = cloud;
-}
-
-void Experiment::SaveTask() {
-  // Get the static cloud
-  rapid_msgs::StaticCloud static_cloud;
-  landmark_.roi = roi_.roi();
-  ComputeLandmark(landmark_.roi, *scene_, &static_cloud);
-
-  // Save the static cloud to the DB.
-  std::string id = task_.landmark_id;
-  std::vector<rapid_msgs::StaticCloud::Ptr> results;
-  if (id == "" || !landmark_db_.queryID(id, results)) {
-    id = landmark_db_.insert(static_cloud);
-  } else {
-    landmark_db_.updateID(task_.landmark_id, static_cloud);
-  }
-  ROS_INFO("Saved landmark for participant: %s, task: %s",
-           participant_.id.c_str(), task_.id.c_str());
-
-  // Update the task and participant data.
-  task_.landmark_id = id;
-  participant_.tasks.push_back(task_);
-
-  // Save the participant.
-  std::vector<landmarks_study::Participant::Ptr> results2;
-  if (participant_db_.queryNamed(participant_.id, results2)) {
-    ROS_INFO(
-        "Updating participant %s, task: %s, landmark_id: %s, # actions: %ld",
-        participant_.id.c_str(), task_.id.c_str(), task_.landmark_id.c_str(),
-        task_.actions.size());
-    participant_db_.updateNamed(participant_.id, participant_, true);
-  } else {
-    ROS_INFO(
-        "Inserting participant %s, task: %s, landmark_id: %s, # actions: %ld",
-        participant_.id.c_str(), task_.id.c_str(), task_.landmark_id.c_str(),
-        task_.actions.size());
-    participant_db_.insertNamed(participant_.id, participant_);
-  }
-}
-
-void Experiment::Load(const std::string& participant_id,
-                      const std::string& task_id) {
+void Experiment::Load(const UserAction& action, const string& task_name) {
   ClearTestVisualization();
 
   // Load participant if already in the DB.
-  GetParticipant(participant_id, &participant_);
-  participant_.id = participant_id;
-  if (participant_.tasks.size() > 0) {
-    ROS_INFO("Participant %s already in DB.", participant_id.c_str());
-  } else {
-    ROS_INFO("Participant %s not in DB.", participant_id.c_str());
+  Participant participant;
+  if (!participant_db_->Get(action.participant_name, &participant)) {
+    ROS_INFO("Participant \"%s\" not in DB, inserting",
+             action.participant_name.c_str());
+    participant.name = action.participant_name;
+    participant.tasks.clear();
   }
-  ROS_INFO("%ld tasks recorded for participant %s", participant_.tasks.size(),
-           participant_.id.c_str());
 
   // Load task if already in the DB.
-  GetTask(participant_, task_id, &task_);
-  task_.id = task_id;
-  if (task_.landmark_id != "") {
-    ROS_INFO("Task %s already in DB.", task_id.c_str());
-  } else {
-    ROS_INFO("Task %s not in DB.", task_id.c_str());
+  Task* task = GetTask(participant, task_name);
+  if (task == NULL) {
+    ROS_INFO("Task \"%s\" not in DB, inserting", task_name.c_str());
+    Task t;
+    t.name = task_name;
+    participant.tasks.push_back(t);
+    task = &participant.tasks[participant.tasks.size() - 1];
   }
-  ROS_INFO("%ld actions recorded for task %s", task_.actions.size(),
-           task_.id.c_str());
+  ROS_INFO("%ld events recorded for task \"%s\"", task->actions.size(),
+           task->name.c_str());
 
-  // Load scene
-  GetScene(TrainSceneName(task_id), scene_);
+  task->actions.push_back(action);
+  SaveParticipant(participant);
 
-  // Load landmark
-  GetLandmark(task_.landmark_id, &landmark_);
+  // Publish scene
+  sensor_msgs::PointCloud2 scene;
+  scene_db_->Get(TrainSceneName(task_name), &scene);
+  scene_pub_.publish(scene);
 
-  ROS_INFO("Loaded participant %s, task %s", participant_.id.c_str(),
-           task_.id.c_str());
+  ROS_INFO("Loaded participant \"%s\", task \"%s\"", participant.name.c_str(),
+           task->name.c_str());
 }
 
-void Experiment::Edit(const std::string& participant_id,
-                      const std::string& task_id) {
+void Experiment::Edit(const UserAction& action, const string& task_name) {
   ClearTestVisualization();
-  if (landmark_.roi.dimensions.x == 0 || landmark_.roi.dimensions.y == 0 ||
-      landmark_.roi.dimensions.z == 0) {
+
+  Participant participant;
+  if (!participant_db_->Get(action.participant_name, &participant)) {
+    ROS_ERROR("Error editing participant \"%s\"",
+              action.participant_name.c_str());
+    return;
+  }
+  Task* task = GetTask(participant, task_name);
+  if (task == NULL) {
+    ROS_ERROR("Error editing task \"%s\" for participant \"%s\"",
+              task_name.c_str(), action.participant_name.c_str());
+    return;
+  }
+  task->actions.push_back(action);
+  SaveParticipant(participant);
+
+  const Roi3D& roi = task->roi;
+
+  if (roi.dimensions.x == 0 || roi.dimensions.y == 0 || roi.dimensions.z == 0) {
     roi_.Start();
   } else {
-    roi_.Start(landmark_.roi.transform.translation.x,
-               landmark_.roi.transform.translation.y,
-               landmark_.roi.transform.translation.z,
-               landmark_.roi.dimensions.x, landmark_.roi.dimensions.y,
-               landmark_.roi.dimensions.z);
-  }
-
-  if (!scene_) {
-    ROS_ERROR("Scene is null");
+    roi_.Start(roi.transform.translation.x, roi.transform.translation.y,
+               roi.transform.translation.z, roi.dimensions.x, roi.dimensions.y,
+               roi.dimensions.z);
   }
 
   // Publish scene
-  scene_pub_.publish(scene_);
+  sensor_msgs::PointCloud2 scene;
+  scene_db_->Get(TrainSceneName(task_name), &scene);
+  scene_pub_.publish(scene);
 
-  ROS_INFO("Editing ROI for participant %s, task %s", participant_.id.c_str(),
-           task_.id.c_str());
+  ROS_INFO("Editing ROI for participant \"%s\", task \"%s\"",
+           action.participant_name.c_str(), task_name.c_str());
 }
 
-void Experiment::Test(const std::string& participant_id,
-                      const std::string& task_id) {
-  // Get the static cloud
-  landmark_.roi = roi_.roi();
-  ComputeLandmark(landmark_.roi, *scene_, &landmark_);
+void Experiment::Test(const UserAction& action, const string& task_name) {
+  Participant participant;
+  if (!participant_db_->Get(action.participant_name, &participant)) {
+    ROS_ERROR("Error testing participant \"%s\"",
+              action.participant_name.c_str());
+    return;
+  }
+  Task* task = GetTask(participant, task_name);
+  if (task == NULL) {
+    ROS_ERROR("Error testing task \"%s\" for participant \"%s\"",
+              task_name.c_str(), action.participant_name.c_str());
+    return;
+  }
+  task->actions.push_back(action);
+
+  // Get the landmark.
+  sensor_msgs::PointCloud2 scene;
+  scene_db_->Get(TrainSceneName(task_name), &scene);
+  task->roi = roi_.roi();
+  rapid_msgs::StaticCloud landmark;
+  ComputeLandmark(task->roi, scene, &landmark);
+
+  // Save the ROI.
+  SaveParticipant(participant);
 
   // Stop publishing the box
   roi_.Stop();
 
   // Publish the test scene.
-  GetScene(TestSceneName(task_id), test_scene_);
-  scene_pub_.publish(test_scene_);
+  sensor_msgs::PointCloud2 test_scene;
+  scene_db_->Get(TestSceneName(task_name), &test_scene);
+  scene_pub_.publish(test_scene);
 
-  ROS_INFO("Testing landmark for participant %s, task %s",
-           participant_.id.c_str(), task_.id.c_str());
+  ROS_INFO("Testing landmark for participant \"%s\", task \"%s\"",
+           participant.name.c_str(), task->name.c_str());
   pcl::StopWatch watch;
   watch.reset();
 
   // Run CustomLandmarks
   PointCloud<PointXYZRGB>::Ptr landmark_cloud(new PointCloud<PointXYZRGB>);
-  pcl::fromROSMsg(landmark_.cloud, *landmark_cloud);
+  pcl::fromROSMsg(landmark.cloud, *landmark_cloud);
   PointCloud<PointXYZRGB>::Ptr test_scene_pcl(new PointCloud<PointXYZRGB>);
-  pcl::fromROSMsg(*test_scene_, *test_scene_pcl);
+  pcl::fromROSMsg(test_scene, *test_scene_pcl);
 
   // Downsample
   PointCloud<PointXYZRGB>::Ptr landmark_cloud_sampled(
@@ -236,7 +204,7 @@ void Experiment::Test(const std::string& participant_id,
   vox.filter(*test_scene_sampled);
 
   pose_estimator_.set_object(landmark_cloud_sampled);
-  pose_estimator_.set_roi(landmark_.roi);
+  pose_estimator_.set_roi(task->roi);
   pose_estimator_.set_scene(test_scene_sampled);
   UpdateParams();
   std::vector<rapid::perception::PoseEstimationMatch> matches;
@@ -244,68 +212,57 @@ void Experiment::Test(const std::string& participant_id,
 
   ClearAlignmentVisualization();
 
-  ROS_INFO("Testing took %f seconds for participant %s, task %s",
-           watch.getTimeSeconds(), participant_.id.c_str(), task_.id.c_str());
+  ROS_INFO("Testing took %f seconds for participant \"%s\", task \"%s\"",
+           watch.getTimeSeconds(), participant.name.c_str(),
+           task->name.c_str());
 }
 
-bool Experiment::GetParticipant(const std::string& participant_id,
-                                Participant* participant) {
-  ROS_INFO("Looking up participant %s", participant_id.c_str());
-  std::vector<Participant::Ptr> results;
-  bool success = participant_db_.queryNamed(participant_id, results, true);
-  if (!success || results.size() == 0) {
-    return false;
+void Experiment::Save(const UserAction& action, const string& task_name) {
+  Participant participant;
+  if (!participant_db_->Get(action.participant_name, &participant)) {
+    ROS_ERROR("Error saving participant \"%s\"",
+              action.participant_name.c_str());
+    return;
   }
-  *participant = *results[0];
-  return true;
+  Task* task = GetTask(participant, task_name);
+  if (task == NULL) {
+    ROS_ERROR("Error saving task \"%s\" for participant \"%s\"",
+              task_name.c_str(), action.participant_name.c_str());
+    return;
+  }
+  task->actions.push_back(action);
+
+  task->roi = roi_.roi();
+  SaveParticipant(participant);
 }
 
-bool Experiment::GetTask(const landmarks_study::Participant& participant,
-                         const std::string& task_id,
-                         landmarks_study::Task* task) {
+bool Experiment::SaveParticipant(const Participant& participant) {
+  Participant p;
+  if (participant_db_->Get(participant.name, &p)) {
+    ROS_INFO("Updating participant \"%s\"", participant.name.c_str());
+    bool success = participant_db_->Update(participant.name, participant);
+    if (!success) {
+      ROS_ERROR("Failed!");
+    }
+  } else {
+    ROS_INFO("Inserting participant \"%s\"", participant.name.c_str());
+    participant_db_->Insert(participant.name, participant);
+    ROS_INFO("Done inserting");
+  }
+}
+
+Task* Experiment::GetTask(Participant& participant, const string& task_name) {
   for (size_t i = 0; i < participant.tasks.size(); ++i) {
     const Task& saved_task = participant.tasks[i];
-    if (saved_task.id == task_id) {
-      *task = saved_task;
-      return true;
+    if (saved_task.name == task_name) {
+      return &participant.tasks[i];
     }
   }
-  return false;
-}
-
-bool Experiment::GetScene(const std::string& scene_id,
-                          sensor_msgs::PointCloud2::Ptr cloud) {
-  ROS_INFO("Getting scene %s", scene_id.c_str());
-  std::vector<sensor_msgs::PointCloud2::Ptr> results;
-  bool success = scene_db_.queryNamed(scene_id, results, true);
-  if (!success || results.size() == 0) {
-    return false;
-  }
-  if (!(results[0])) {
-    ROS_ERROR("Could not load scene %s", scene_id.c_str());
-    return false;
-  }
-  *cloud = *results[0];
-  return true;
-}
-
-bool Experiment::GetLandmark(const std::string& landmark_id,
-                             rapid_msgs::StaticCloud* landmark) {
-  ROS_INFO("Getting landmark %s", landmark_id.c_str());
-  if (landmark_id == "") {
-    return false;
-  }
-  std::vector<rapid_msgs::StaticCloud::Ptr> results;
-  bool success = landmark_db_.queryID(landmark_id, results);
-  if (!success || results.size() == 0) {
-    return false;
-  }
-  *landmark = *results[0];
-  return true;
+  return NULL;
 }
 
 // Assumes both the cloud and the ROI are in base_link.
-void Experiment::ComputeLandmark(const rapid_msgs::Roi3D& roi,
+void Experiment::ComputeLandmark(const Roi3D& roi,
                                  const sensor_msgs::PointCloud2& scene,
                                  rapid_msgs::StaticCloud* static_cloud) {
   static_cloud->roi = roi;
@@ -313,9 +270,9 @@ void Experiment::ComputeLandmark(const rapid_msgs::Roi3D& roi,
   static_cloud->base_to_camera.rotation.w = 1;
 
   PointCloud<PointXYZRGB>::Ptr pcl_cloud(new PointCloud<PointXYZRGB>);
-  pcl::fromROSMsg(*scene_, *pcl_cloud);
-  pcl::CropBox<PointXYZRGB> crop_;
-  crop_.setInputCloud(pcl_cloud);
+  pcl::fromROSMsg(scene, *pcl_cloud);
+  pcl::CropBox<PointXYZRGB> crop;
+  crop.setInputCloud(pcl_cloud);
   Eigen::Vector4f min_pt;
   min_pt << roi.transform.translation.x - roi.dimensions.x / 2,
       roi.transform.translation.y - roi.dimensions.y / 2,
@@ -324,19 +281,12 @@ void Experiment::ComputeLandmark(const rapid_msgs::Roi3D& roi,
   max_pt << roi.transform.translation.x + roi.dimensions.x / 2,
       roi.transform.translation.y + roi.dimensions.y / 2,
       roi.transform.translation.z + roi.dimensions.z / 2, 0;
-  crop_.setMin(min_pt);
-  crop_.setMax(max_pt);
+  crop.setMin(min_pt);
+  crop.setMax(max_pt);
 
   PointCloud<PointXYZRGB> out;
-  crop_.filter(out);
+  crop.filter(out);
   pcl::toROSMsg(out, static_cloud->cloud);
-}
-
-std::string Experiment::TrainSceneName(const std::string& task_id) {
-  return task_id;
-}
-std::string Experiment::TestSceneName(const std::string& task_id) {
-  return task_id + "_test";
 }
 
 void Experiment::UpdateParams() {
@@ -420,5 +370,36 @@ void Experiment::ClearAlignmentVisualization() {
   pcl::toROSMsg(pcl_blank, blank);
   blank.header.frame_id = kBaseFrame;
   alignment_pub_.publish(blank);
+}
+
+void Experiment::TaskOrder(const string& participant_name, const int num_tasks,
+                           std::vector<int>* order) {
+  order->clear();
+  for (int i = 0; i < num_tasks; ++i) {
+    order->push_back(i);
+  }
+  int hash = 0;
+  for (size_t i = 0; i < participant_name.size(); ++i) {
+    hash += participant_name.at(i);
+    participant_name[i];
+  }
+  std::srand(hash);
+  std::random_shuffle(order->begin(), order->end());
+}
+
+string Experiment::TaskName(const string& participant_name,
+                            const int task_number) {
+  std::vector<int> task_order;
+  TaskOrder(participant_name, task_list_.size(), &task_order);
+  if (static_cast<size_t>(task_number) >= task_order.size()) {
+    return kEndTask;
+  }
+  int task_name = task_order[task_number];
+  return task_list_[task_name];
+}
+
+string Experiment::TrainSceneName(const string& task_name) { return task_name; }
+string Experiment::TestSceneName(const string& task_name) {
+  return task_name + "_test";
 }
 }  // namespace study
