@@ -10,6 +10,8 @@
 #include "pcl/point_types.h"
 #include "pcl_conversions/pcl_conversions.h"
 #include "pcl_ros/transforms.h"
+#include "rapid_perception/conversions.h"
+#include "rapid_perception/rgbd.h"
 #include "ros/ros.h"
 #include "sensor_msgs/PointCloud2.h"
 #include "std_msgs/String.h"
@@ -59,8 +61,11 @@ int main(int argc, char** argv) {
       }
       scene_pub.publish(results[0]);
     } else if (command == "save") {
-      sensor_msgs::PointCloud2::ConstPtr cloud =
-          ros::topic::waitForMessage<sensor_msgs::PointCloud2>("cloud_in", nh);
+      int num_clouds = 5;
+      ros::param::param<int>("num_clouds", num_clouds, 5);
+      sensor_msgs::PointCloud2::Ptr cloud = rapid::perception::RosFromPcl(
+          rapid::perception::GetSmoothedKinectCloud("cloud_in", num_clouds));
+
       sensor_msgs::PointCloud2 cloud_base;
       pcl_ros::transformPointCloud("base_link", *cloud, cloud_base,
                                    tf_listener);
