@@ -47,7 +47,7 @@
       ros="{{ros}}"
       msg-type="landmarks_study/UserAction"
     ></ros-topic>
-    <ros-rviz id="rviz" ros="{{ros}}"></ros-rviz>
+    <!--ros-rviz id="rviz" ros="{{ros}}"></ros-rviz-->
     <div class="buttons layout vertical">
       <div class="flex"></div>
       <paper-button
@@ -185,7 +185,6 @@
             nsecs: (now % 1000) * 1000000,
           },
         };
-        console.log('editing', msg);
         this.$.topic.publish(msg);
         this.$.rviz.set('displays.3.isShown', false);
         this.$.rviz.set('displays.4.isShown', false);
