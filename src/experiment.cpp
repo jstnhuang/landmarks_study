@@ -239,15 +239,9 @@ void Experiment::Save(const UserAction& action, const string& task_name) {
 bool Experiment::SaveParticipant(const Participant& participant) {
   Participant p;
   if (participant_db_->Get(participant.name, &p)) {
-    ROS_INFO("Updating participant \"%s\"", participant.name.c_str());
-    bool success = participant_db_->Update(participant.name, participant);
-    if (!success) {
-      ROS_ERROR("Failed!");
-    }
+    participant_db_->Update(participant.name, participant);
   } else {
-    ROS_INFO("Inserting participant \"%s\"", participant.name.c_str());
     participant_db_->Insert(participant.name, participant);
-    ROS_INFO("Done inserting");
   }
 }
 
