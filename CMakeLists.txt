@@ -60,6 +60,7 @@ add_message_files(
   FILES
   Event.msg
   Participant.msg
+  Status.msg
   Task.msg
 )
 

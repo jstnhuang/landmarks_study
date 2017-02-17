@@ -7,7 +7,7 @@
 
 <dom-module id="study-experiment">
   <template>
-    <style include="iron-flex"></style>
+    <style include="iron-flex iron-flex-alignment"></style>
     <style>
       :host {
         display: block;
@@ -35,6 +35,10 @@
       paper-button + paper-button {
         margin-top: 20px;
       }
+      .status {
+        margin: 0px auto;
+        width: 80%;
+      }
     </style>
     <app-route
       route="{{route}}"
@@ -47,6 +51,16 @@
       ros="{{ros}}"
       msg-type="landmarks_study/Event"
     ></ros-topic>
+    <ros-topic
+      auto
+      id="statusTopic"
+      on-message="handleStatus"
+      last-message="{{status}}"
+      topic="experiment_status"
+      ros="{{ros}}"
+      msg-type="landmarks_study/Status"
+    ></ros-topic>
+
     <ros-rviz id="rviz" ros="{{ros}}"></ros-rviz>
     <div class="buttons layout vertical">
       <div class="flex"></div>
@@ -70,7 +84,9 @@
         raised
         title="Save this landmark and go to the next task"
       >Next task</paper-button>
-      <div class="flex"></div>
+      <div class="flex layout horizontal status end">
+        <p>[[status.text]]</p>
+      </div>
     </div>
   </template>
 
@@ -81,11 +97,21 @@
 
       properties: {
         ros: Object,
+        mainRoute: Object,
         route: Object,
         isEditing: {
           type: Boolean,
           value: true,
         },
+        routeData: {
+          type: Object,
+          value: function() {
+            return {
+              user: '',
+              taskNum: 0,
+            };
+          }
+        }
       },
 
       observers: [
@@ -154,6 +180,7 @@
         }
 
         this.debounce('load_edit', function() {
+          this.$.statusTopic.subscribe();
           // Load the task
           var now = Date.now();
           var msg = {
@@ -226,6 +253,14 @@
         this.$.topic.publish(msg);
 
         this.set('routeData.taskNum', taskNum + 1);
+      },
+
+      handleStatus: function(evt) {
+        if (evt.detail.type === 'end of study') {
+          this.$.statusTopic.unsubscribe();
+          console.log('going to end page');
+          this.set('mainRoute.path', '/end');
+        }
       },
     });
   </script>

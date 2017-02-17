@@ -9,6 +9,7 @@
 #include "sensor_msgs/PointCloud2.h"
 
 #include "landmarks_study/experiment.h"
+#include "landmarks_study/Status.h"
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "study_node");
@@ -29,6 +30,8 @@ int main(int argc, char** argv) {
       nh.advertise<sensor_msgs::PointCloud2>("/alignment", 1, true);
   ros::Publisher output_pub =
       nh.advertise<sensor_msgs::PointCloud2>("/output", 1, true);
+  ros::Publisher status_pub =
+      nh.advertise<landmarks_study::Status>("/experiment_status", 1);
 
   // Build CustomLandmarks
   rapid::perception::RandomHeatMapper* heat_mapper =
@@ -43,7 +46,7 @@ int main(int argc, char** argv) {
   nh.getParam("experiment_tasks", task_list);
 
   study::Experiment experiment(&participant_db, &landmark_db, &scene_db, roi,
-                               scene_pub, alignment_pub, output_pub,
+                               scene_pub, alignment_pub, output_pub, status_pub,
                                pose_estimator, task_list);
   ros::Subscriber action_sub = nh.subscribe(
       "experiment_events", 10, &study::Experiment::ProcessEvent, &experiment);

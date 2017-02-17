@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -21,27 +22,27 @@
 
 #include "landmarks_study/Event.h"
 #include "landmarks_study/Participant.h"
+#include "landmarks_study/Status.h"
 #include "landmarks_study/Task.h"
 #include "landmarks_study/experiment_constants.h"
 
-using landmarks_study::Participant;
-using landmarks_study::Task;
 using landmarks_study::Event;
+using landmarks_study::Participant;
+using landmarks_study::Status;
+using landmarks_study::Task;
 using pcl::PointCloud;
 using pcl::PointXYZRGB;
 using rapid_msgs::Roi3D;
 using std::string;
 
 namespace study {
-Experiment::Experiment(rapid::db::NameDb* participant_db,
-                       rapid::db::NameDb* landmark_db,
-                       rapid::db::NameDb* scene_db,
-                       const rapid::perception::Box3DRoiServer& roi,
-                       const ros::Publisher& scene_pub,
-                       const ros::Publisher& alignment_pub,
-                       const ros::Publisher& output_pub,
-                       const rapid::perception::PoseEstimator& pose_estimator,
-                       const std::vector<string>& task_list)
+Experiment::Experiment(
+    rapid::db::NameDb* participant_db, rapid::db::NameDb* landmark_db,
+    rapid::db::NameDb* scene_db, const rapid::perception::Box3DRoiServer& roi,
+    const ros::Publisher& scene_pub, const ros::Publisher& alignment_pub,
+    const ros::Publisher& output_pub, const ros::Publisher& status_pub,
+    const rapid::perception::PoseEstimator& pose_estimator,
+    const std::vector<string>& task_list)
     : participant_db_(participant_db),
       landmark_db_(landmark_db),
       scene_db_(scene_db),
@@ -49,6 +50,7 @@ Experiment::Experiment(rapid::db::NameDb* participant_db,
       scene_pub_(scene_pub),
       alignment_pub_(alignment_pub),
       output_pub_(output_pub),
+      status_pub_(status_pub),
       pose_estimator_(pose_estimator),
       task_list_(task_list),
       scene_cache_() {}
@@ -57,8 +59,16 @@ void Experiment::ProcessEvent(const Event& event) {
   const string& task_name = TaskName(event.participant_name, event.task_number);
   if (task_name == kEndTask) {
     ClearTestVisualization();
+    Status status;
+    status.type = Status::END;
+    status_pub_.publish(status);
     return;
   }
+
+  // Clear UI status message.
+  Status status;
+  status.type = Status::MESSAGE;
+  status_pub_.publish(status);
 
   if (event.type == landmarks_study::Event::LOAD) {
     Load(event, task_name);
@@ -83,6 +93,10 @@ void Experiment::Load(const Event& event, const string& task_name) {
              event.participant_name.c_str());
     participant.name = event.participant_name;
     participant.tasks.clear();
+
+    Status status;
+    status.type = Status::NEW_USER;
+    status_pub_.publish(status);
   }
 
   // Load task if already in the DB.
@@ -161,6 +175,11 @@ void Experiment::Test(const Event& event, const string& task_name) {
   }
   task->events.push_back(event);
 
+  Status status;
+  status.type = Status::MESSAGE;
+  status.text = "Testing...";
+  status_pub_.publish(status);
+
   // Get the landmark.
   sensor_msgs::PointCloud2 scene;
   GetScene(TrainSceneName(task_name), &scene);
@@ -212,6 +231,18 @@ void Experiment::Test(const Event& event, const string& task_name) {
   ROS_INFO("Testing took %f seconds for participant \"%s\", task \"%s\"",
            watch.getTimeSeconds(), participant.name.c_str(),
            task->name.c_str());
+
+  std::stringstream ss;
+  ss << "Found " << matches.size();
+  if (matches.size() == 1) {
+    ss << " instance of the landmark.";
+  } else {
+    ss << " instances of the landmark.";
+  }
+
+  status.type = Status::MESSAGE;
+  status.text = ss.str();
+  status_pub_.publish(status);
 
   Event finished;
   finished.type = Event::FINISHED_TEST;
