@@ -415,7 +415,7 @@ void Experiment::TaskOrder(const string& participant_name, const int num_tasks,
     participant_name[i];
   }
   std::srand(hash);
-  std::random_shuffle(order->begin(), order->end());
+  std::random_shuffle(order->begin() + 1, order->end());
 }
 
 string Experiment::TaskName(const string& participant_name,
