@@ -63,6 +63,8 @@ int main(int argc, char** argv) {
     } else if (command == "save") {
       int num_clouds = 5;
       ros::param::param<int>("num_clouds", num_clouds, 5);
+      double leaf_size;
+      ros::param::param("leaf_size", leaf_size, 0.001);
       sensor_msgs::PointCloud2::Ptr cloud = rapid::perception::RosFromPcl(
           rapid::perception::GetSmoothedKinectCloud("cloud_in", num_clouds));
 
