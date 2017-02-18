@@ -10,7 +10,7 @@
     "\u003Cp\u003EThe robot is going to open or close one of the drawers. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EThe test should find 2 instances of your landmark.\u003C/p\u003E",
     "\u003Cp\u003EThe robot is going to place markers into an empty compartment in the wooden pencil holder. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EThe test should only find 1 instance of your landmark.\u003C/p\u003E",
     "\u003Cp\u003EThe robot is going to pick up the Tide bottle. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EThe test should only find 1 instance of your landmark.\u003C/p\u003E",
-    "\u003Cp\u003EThe robot is going to place something the size of the curved red block on the table in an empty spot. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EThe test should only find at least 3 instances of your landmark.\u003C/p\u003E"
+    "\u003Cp\u003EThe robot is going to place something the size of the red puck on an empty spot on the table. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EFind as many instances of your landmark as possible (at least 6) without any incorrect landmarks.\u003C/p\u003E"
   ]</rosparam>
 
   <!-- CustomLandmarks parameters -->
