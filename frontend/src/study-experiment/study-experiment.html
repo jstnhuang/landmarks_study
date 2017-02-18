@@ -155,7 +155,7 @@
               options: {
                 topic: '/roi',
               },
-              isShown: false,
+              isShown: true,
             }, {
               type: 'pointCloud2',
               name: 'Scene',
@@ -216,12 +216,10 @@
           return;
         }
         if (isEditing) {
-          this.$.rviz.set('displays.1.isShown', true);
           this.$.rviz.set('displays.3.isShown', false);
           this.$.rviz.set('displays.4.isShown', false);
         }
         if (!isEditing) {
-          this.$.rviz.set('displays.1.isShown', false);
           this.$.rviz.set('displays.3.isShown', true);
           this.$.rviz.set('displays.4.isShown', true);
         }
