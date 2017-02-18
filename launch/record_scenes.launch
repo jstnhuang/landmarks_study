@@ -2,7 +2,7 @@
   <param name="sor_mean_k" value="50" />
   <param name="sor_stddev" value="1" />
   <param name="vox_min_pts" value="2" />
-  <param name="random_sample_factor" value="2" />
+  <param name="random_sample_factor" value="1" />
   <param name="mongodb_use_daemon" value="true" />
   <param name="mongodb_host" value="localhost" />
   <param name="mongodb_port" value="27017" />
