@@ -3,21 +3,21 @@
   <arg name="debug" default="false" />
 
   <!-- List of tasks to include in the experiment -->
-  <rosparam param="experiment_tasks">['cans', 'bowls', 'drawer', 'marker_holder', 'tide', 'zone']</rosparam>
+  <rosparam param="experiment_tasks">['cans', 'bowls', 'drawer', 'marker_holder', 'tide', 'cluttered']</rosparam>
   <rosparam param="experiment_task_descriptions">[
     "\u003Cp\u003EThe robot is going to pick up the rightmost can on the table. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EThe test should only find 1 instance of your landmark.\u003C/p\u003E",
     "\u003Cp\u003EThe robot is going to take the bowls out of the shelf. It needs to find all of the bowls that are not underneath another bowl. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EThe test should find 2 instances of your landmark.\u003C/p\u003E",
     "\u003Cp\u003EThe robot is going to open or close one of the drawers. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EThe test should find 2 instances of your landmark.\u003C/p\u003E",
     "\u003Cp\u003EThe robot is going to place markers into an empty compartment in the wooden pencil holder. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EThe test should only find 1 instance of your landmark.\u003C/p\u003E",
     "\u003Cp\u003EThe robot is going to pick up the Tide bottle. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EThe test should only find 1 instance of your landmark.\u003C/p\u003E",
-    "\u003Cp\u003EThe robot is going to place something (not shown) into the marked zone. To do this, it needs to know where the zone is. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EThe test should only find 1 instance of your landmark.\u003C/p\u003E"
+    "\u003Cp\u003EThe robot is going to place something the size of the curved red block on the table in an empty spot. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EThe test should only find at least 3 instances of your landmark.\u003C/p\u003E"
   ]</rosparam>
 
   <!-- CustomLandmarks parameters -->
-  <param name="leaf_size" value="0.0075" />
+  <param name="leaf_size" value="0.01" />
   <param name="min_x" value="0.3" />
   <param name="min_y" value="-0.75" />
-  <param name="min_z" value="0.3" />
+  <param name="min_z" value="0.2" />
   <param name="max_x" value="1.2" />
   <param name="max_y" value="0.75" />
   <param name="max_z" value="1.7" />
