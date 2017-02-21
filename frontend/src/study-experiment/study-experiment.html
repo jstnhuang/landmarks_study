@@ -73,14 +73,14 @@
       <div class="flex status" inner-h-t-m-l="[[description.data]]"></div>
       <paper-button
         class="edit"
-        disabled="[[isEditing]]"
+        disabled="[[_isEditDisabled(mode)]]"
         on-tap="handleEdit"
         raised
         title="Edit this landmark"
       >Edit</paper-button>
       <paper-button
         class="test"
-        disabled="[[!isEditing]]"
+        disabled="[[_isTestDisabled(mode)]]"
         on-tap="handleTest"
         raised
         title="Try this landmark on a test scene"
@@ -106,9 +106,9 @@
         ros: Object,
         mainRoute: Object,
         route: Object,
-        isEditing: {
-          type: Boolean,
-          value: false,
+        mode: {
+          type: String,
+          value: 'loaded',
         },
         isAttached: {
           type: Boolean,
@@ -127,7 +127,7 @@
 
       observers: [
         '_routeChanged(ros, routeData.user, routeData.taskNum)',
-        '_isEditingChanged(isAttached, isEditing)',
+        '_modeChanged(isAttached, mode)',
       ],
 
       ready: function() {
@@ -176,10 +176,17 @@
               type: 'pointCloud2',
               name: 'Output',
               options: {
-                size: 0.02,
+                size: 0.03,
                 topic: '/output',
               },
               isShown: false,
+            }, {
+              type: 'markerArray',
+              name: 'Output boxes',
+              options: {
+                topic: '/output_markers',
+              },
+              isShown: true,
             }
           ],
           sidebarOpened: false,
@@ -208,22 +215,32 @@
           };
 
           this.$.topic.publish(msg);
-          this.isEditing = false;
+          this.mode = 'loaded';
         }, 100);
       },
 
-      _isEditingChanged: function(isAttached, isEditing) {
-        if (!isAttached) {
+      _modeChanged: function(isAttached, mode) {
+        if (!mode) {
           return;
         }
-        if (isEditing) {
+        if (mode === "loaded") {
           this.$.rviz.set('displays.3.isShown', false);
           this.$.rviz.set('displays.4.isShown', false);
-        }
-        if (!isEditing) {
+        } else if (mode === "editing") {
+          this.$.rviz.set('displays.3.isShown', false);
+          this.$.rviz.set('displays.4.isShown', false);
+        } else if (mode === "testing") {
           this.$.rviz.set('displays.3.isShown', true);
           this.$.rviz.set('displays.4.isShown', true);
         }
+      },
+
+      _isEditDisabled: function(mode) {
+        return mode === "editing";
+      },
+
+      _isTestDisabled: function(mode) {
+        return mode === "loaded" || mode === "testing";
       },
 
       handleEdit: function() {
@@ -240,7 +257,7 @@
           },
         };
         this.$.topic.publish(msg);
-        this.isEditing = true;
+        this.mode = 'editing';
       },
 
       handleTest: function() {
@@ -257,7 +274,7 @@
           },
         };
         this.$.topic.publish(msg);
-        this.isEditing = false;
+        this.mode = 'testing';
       },
 
       handleNext: function() {

@@ -23,7 +23,9 @@ class Experiment {
              const rapid::perception::Box3DRoiServer& roi,
              const ros::Publisher& scene_pub,
              const ros::Publisher& alignment_pub,
-             const ros::Publisher& output_pub, const ros::Publisher& status_pub,
+             const ros::Publisher& output_pub,
+             const ros::Publisher& output_markers_pub,
+             const ros::Publisher& status_pub,
              const ros::Publisher& description_pub,
              const rapid::perception::PoseEstimator& pose_estimator,
              const std::vector<std::string>& task_list,
@@ -80,6 +82,7 @@ class Experiment {
   ros::Publisher scene_pub_;
   ros::Publisher alignment_pub_;
   ros::Publisher output_pub_;
+  ros::Publisher output_markers_pub_;
   ros::Publisher status_pub_;
   ros::Publisher description_pub_;
   rapid::perception::PoseEstimator pose_estimator_;

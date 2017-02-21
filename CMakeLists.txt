@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   rapid_db
   rapid_msgs
   rapid_perception
+  rapid_viz
   roscpp
   rospy
   sensor_msgs

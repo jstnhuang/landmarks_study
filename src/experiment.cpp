@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "Eigen/Dense"
+#include "geometry_msgs/PoseStamped.h"
 #include "pcl/filters/crop_box.h"
 #include "pcl/filters/voxel_grid.h"
 #include "pcl/point_cloud.h"
@@ -19,7 +20,10 @@
 #include "rapid_perception/box3d_roi_server.h"
 #include "rapid_perception/pose_estimation.h"
 #include "rapid_perception/random_heat_mapper.h"
+#include "rapid_viz/markers.h"
 #include "std_msgs/String.h"
+#include "visualization_msgs/Marker.h"
+#include "visualization_msgs/MarkerArray.h"
 
 #include "landmarks_study/Event.h"
 #include "landmarks_study/Participant.h"
@@ -41,8 +45,8 @@ Experiment::Experiment(
     rapid::db::NameDb* participant_db, rapid::db::NameDb* landmark_db,
     rapid::db::NameDb* scene_db, const rapid::perception::Box3DRoiServer& roi,
     const ros::Publisher& scene_pub, const ros::Publisher& alignment_pub,
-    const ros::Publisher& output_pub, const ros::Publisher& status_pub,
-    const ros::Publisher& description_pub,
+    const ros::Publisher& output_pub, const ros::Publisher& output_markers_pub,
+    const ros::Publisher& status_pub, const ros::Publisher& description_pub,
     const rapid::perception::PoseEstimator& pose_estimator,
     const std::vector<string>& task_list,
     const std::vector<string>& task_descriptions)
@@ -53,6 +57,7 @@ Experiment::Experiment(
       scene_pub_(scene_pub),
       alignment_pub_(alignment_pub),
       output_pub_(output_pub),
+      output_markers_pub_(output_markers_pub),
       status_pub_(status_pub),
       description_pub_(description_pub),
       pose_estimator_(pose_estimator),
@@ -260,6 +265,20 @@ void Experiment::Test(const Event& event, const string& task_name) {
   status.text = ss.str();
   status_pub_.publish(status);
 
+  visualization_msgs::MarkerArray marker_arr;
+  for (size_t i = 0; i < matches.size(); ++i) {
+    const rapid::perception::PoseEstimationMatch& match = matches[i];
+    geometry_msgs::PoseStamped ps;
+    ps.header.frame_id = kBaseFrame;
+    ps.pose = match.pose();
+    visualization_msgs::Marker marker =
+        rapid::viz::OutlineBox(ps, task->roi.dimensions);
+    marker.ns = "output_markers";
+    marker.id = i;
+    marker_arr.markers.push_back(marker);
+  }
+  output_markers_pub_.publish(marker_arr);
+
   Event finished;
   finished.type = Event::FINISHED_TEST;
   finished.participant_name = participant.name;
@@ -406,6 +425,13 @@ void Experiment::ClearTestVisualization() {
   blank.header.frame_id = kBaseFrame;
   alignment_pub_.publish(blank);
   output_pub_.publish(blank);
+
+  visualization_msgs::MarkerArray marker_arr;
+  visualization_msgs::Marker marker;
+  marker.header.frame_id = kBaseFrame;
+  marker.action = 3;  // Delete all.
+  marker_arr.markers.push_back(marker);
+  output_markers_pub_.publish(marker_arr);
 }
 
 void Experiment::ClearAlignmentVisualization() {
