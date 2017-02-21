@@ -3,13 +3,11 @@
   <arg name="debug" default="false" />
 
   <!-- List of tasks to include in the experiment -->
-  <rosparam param="experiment_tasks">['cans', 'bowls', 'drawer', 'marker_holder', 'tide', 'cluttered']</rosparam>
+  <rosparam param="experiment_tasks">['cans', 'bowls', 'marker_holder', 'cluttered']</rosparam>
   <rosparam param="experiment_task_descriptions">[
     "\u003Cp\u003EThe robot is going to pick up the rightmost can on the table. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EThe test should only find 1 instance of your landmark.\u003C/p\u003E",
     "\u003Cp\u003EThe robot is going to take the bowls out of the shelf. It needs to find all of the bowls that are not underneath another bowl. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EThe test should find 2 instances of your landmark.\u003C/p\u003E",
-    "\u003Cp\u003EThe robot is going to open or close one of the drawers. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EThe test should find 2 instances of your landmark.\u003C/p\u003E",
     "\u003Cp\u003EThe robot is going to place markers into an empty compartment in the wooden pencil holder. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EThe test should only find 1 instance of your landmark.\u003C/p\u003E",
-    "\u003Cp\u003EThe robot is going to pick up the Tide bottle. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EThe test should only find 1 instance of your landmark.\u003C/p\u003E",
     "\u003Cp\u003EThe robot is going to place something the size of the red puck on an empty spot on the table. Create a landmark that can be used to accomplish this task.\u003C/p\u003E\u003Cp\u003EFind as many instances of your landmark as possible (at least 6) without any incorrect landmarks.\u003C/p\u003E"
   ]</rosparam>
 
