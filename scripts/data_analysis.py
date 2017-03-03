@@ -15,7 +15,7 @@ def get_time(time_counter, event_type):
 def format_time(secs):
     minutes = int(math.floor(secs / 60))
     seconds = int(round((secs % 60)))
-    return '{}m {}s'.format(minutes, seconds)
+    return '0:{}:{:0>2}'.format(minutes, seconds)
 
 def process(participant, task):
     features = {}
